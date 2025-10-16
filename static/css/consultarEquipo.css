@@ -1,0 +1,163 @@
+
+/* Contenedor principal que centra y define el área de trabajo */
+.main-container {
+    width: 800px;
+    min-height: 650px; /* Alto mínimo para contener todos los elementos */
+    margin: 40px auto; /* Centrar en la página */
+    padding: 20px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    position: relative; /* Clave para posicionar los elementos hijos (absolute) */
+    box-sizing: border-box;
+}
+
+/* --- Elementos de la Fila Superior --- */
+
+.top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    height: 40px;
+}
+
+/* Rectángulo Amarillo (Cuadro de Texto) */
+.text-box-yellow {
+    background-color: #FFD700;
+    border: 1px solid #d4af37;
+    width: 250px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    position: absolute; /* Posicionamiento específico dentro del main-container */
+    top: 20px;
+    left: 20px;
+    box-sizing: border-box;
+}
+
+/* Botón Morado Principal (Eliminar) */
+.btn-primary {
+    background-color: #8A2BE2; /* Morado */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: bold;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.btn-delete {
+    width: 150px;
+    height: 40px;
+    position: absolute; /* Posicionamiento específico dentro del main-container */
+    top: 20px;
+    right: 200px;
+}
+
+
+/* --- Grid Principal de la Interfaz (Paneles) --- */
+
+.interface-grid {
+    display: grid;
+    /* 1ra col (Panel Izquierdo) | 2da col (Panel Derecho) */
+    grid-template-columns: 300px 480px;
+    gap: 20px;
+    position: absolute; /* Posicionar justo debajo de la fila superior */
+    top: 80px;
+    left: 20px;
+}
+
+/* Panel Azul Base */
+.panel-blue {
+    background-color: #4682B4; /* Azul */
+    border: 1px solid #366d9c;
+    padding: 15px;
+    box-sizing: border-box;
+    height: 450px; /* Alto fijo para ambos paneles */
+}
+
+/* Panel Azul Izquierdo: Botones Verdes */
+.panel-left {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 280px; /* Ancho ajustado */
+}
+
+/* Botones Verdes (Secundarios) */
+.btn-secondary {
+    background-color: #3CB371; /* Verde */
+    border: 1px solid #2e8b57;
+    padding: 8px;
+    color: white;
+    text-align: center;
+    cursor: pointer;
+    width: 100%;
+    height: 45px;
+    box-sizing: border-box;
+}
+
+/* Panel Azul Derecho: Estructura interna */
+.panel-right {
+    display: grid;
+    /* Filas: Rojo Superior | Contenido Central | Rojo Inferior */
+    grid-template-rows: 80px auto 80px;
+    gap: 10px;
+    width: 460px; /* Ancho ajustado */
+}
+
+/* Cuadros de Texto Rojos */
+.text-box-red {
+    background-color: #DC143C; /* Rojo */
+    border: 1px solid #b20e2c;
+    padding: 10px;
+    color: white;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+/* Fila de Contenido Central (Imagen Naranja y Caja Roja Derecha) */
+.content-row {
+    display: grid;
+    /* Columnas: Imagen Naranja | Caja Roja Derecha */
+    grid-template-columns: 1fr 150px;
+    gap: 10px;
+}
+
+/* Imagen Naranja */
+.image-orange {
+    background-color: #FFA500; /* Naranja */
+    border: 1px solid #cc8400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    height: 100%; /* Ocupa todoo el alto de la fila */
+}
+
+.red-box-top, .red-box-bottom {
+    width: 100%;
+}
+
+.red-box-right {
+    height: 100%; /* Ocupa todoo el alto de la fila */
+}
+
+
+/* --- Botón Inferior --- */
+
+/* Botón Morado Principal (Editar) */
+.btn-edit-bottom {
+    width: 180px;
+    height: 40px;
+    position: absolute; /* Posicionamiento específico dentro del main-container */
+    bottom: 20px;
+    right: 20px;
+}

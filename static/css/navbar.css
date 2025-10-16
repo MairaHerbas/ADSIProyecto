@@ -1,20 +1,18 @@
 /* static/css/navbar.css */
 .navbar {
     display: flex;
-    justify-content: space-between; /* Distribuye el espacio entre los elementos */
     align-items: center;
+    justify-content: flex-end;
     background-color: #333; /* Color de fondo oscuro */
     color: white;
     padding: 10px 20px;
     height: 60px; /* Altura fija para el navbar */
+    overflow: auto; /* Esto ayuda a limpiar el 'float' */
 }
 
-.navbar-title {
-    font-size: 1.5em;
-    font-weight: bold;
-}
 
 .btn-salir {
+
     text-decoration: none;
     color: white;
     background-color: #d9534f; /* Color rojo para salir */
