@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Iniciar sesión{% endblock %}
+{% block content %}
+<div class="card">
+  <h3>Iniciar sesión</h3>
+  <form method="post">
+    <div class="row">
+      <input name="email" placeholder="Email" type="email" required>
+      <input name="password" placeholder="Contraseña" type="password" required>
+      <button>Entrar</button>
+    </div>
+  </form>
+  <p class="muted">¿No tienes cuenta? <a href="{{ url_for('register') }}">Regístrate</a>.</p>
+</div>
+{% endblock %}

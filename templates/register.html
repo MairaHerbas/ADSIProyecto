@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Registro{% endblock %}
+{% block content %}
+<div class="card">
+  <h3>Registro</h3>
+  <form method="post">
+    <div class="row">
+      <input name="email" placeholder="Email" type="email" required>
+      <input name="display_name" placeholder="Nombre visible" required>
+      <input name="password" placeholder="Contraseña" type="password" required>
+      <input name="password2" placeholder="Repite la contraseña" type="password" required>
+      <button>Crear cuenta</button>
+    </div>
+  </form>
+  <p class="muted">La cuenta quedará <b>PENDING</b> hasta que un administrador la apruebe.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Perfil{% endblock %}
+{% block content %}
+<div class="card">
+  <h3>Tu perfil</h3>
+  <form method="post">
+    <div class="row">
+      <input name="display_name" value="{{ me.display_name }}" placeholder="Nombre visible" required>
+    </div>
+    <div style="margin-top:8px">
+      <textarea name="bio" rows="4" placeholder="Bio">{{ me.bio }}</textarea>
+    </div>
+    <div style="margin-top:8px">
+      <button>Guardar</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Buscar usuarios aprobados</h3>
+  <form method="get">
+    <div class="row">
+      <input name="q" value="{{ q }}" placeholder="Buscar por email o nombre">
+      <button>Buscar</button>
+    </div>
+  </form>
+  {% if results %}
+    <ul>
+      {% for u in results %}
+        <li>
+          {{ u.display_name }} &lt;{{ u.email }}&gt;
+          {% if u.is_admin %}<span class="pill">admin</span>{% endif %}
+          <form class="inline" method="post" action="{{ url_for('follow', user_id=u.id, q=q) }}">
+            <button>Seguir</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% elif q %}
+    <p class="muted">Sin resultados.</p>
+  {% endif %}
+</div>
+
+<div class="row">
+  <div class="card" style="flex:1">
+    <h3>Siguiendo ({{ following|length }})</h3>
+    <ul>
+      {% for u in following %}
+        <li>
+          {{ u.display_name }} &lt;{{ u.email }}&gt;
+          <form class="inline" method="post" action="{{ url_for('unfollow', user_id=u.id, q=q) }}">
+            <button>Dejar de seguir</button>
+          </form>
+        </li>
+      {% else %}
+        <li class="muted">No sigues a nadie aún.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="card" style="flex:1">
+    <h3>Seguidores ({{ followers|length }})</h3>
+    <ul>
+      {% for u in followers %}
+        <li>{{ u.display_name }} &lt;{{ u.email }}&gt;</li>
+      {% else %}
+        <li class="muted">Aún no tienes seguidores.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
