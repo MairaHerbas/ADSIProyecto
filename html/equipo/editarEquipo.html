@@ -1,10 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
+{% extends '_base.html' %}
+
+{% block title %}Editar Equipo{% endblock %}
+
+{% block content %}
 <body>
 
+    <div class="screen-container">
+
+        <main class="content-area">
+
+            <input type="text" class="text-box" placeholder="POKEMON 1">
+            <input type="text" class="text-box" placeholder="POKEMON 2">
+            <input type="text" class="text-box" placeholder="POKEMON 3">
+            <input type="text" class="text-box" placeholder="POKEMON 4">
+            <input type="text" class="text-box" placeholder="POKEMON 5">
+            <input type="text" class="text-box" placeholder="POKEMON 6">
+
+        </main>
+
+        <footer class="footer-bar">
+            <button class="btn-confirmar" id="confirmButton">CONFIRMAR CAMBIOS</button>
+        </footer>
+
+    </div>
+
+    <script src="script.js"></script>
+
 </body>
-</html>
+{% endblock %}
