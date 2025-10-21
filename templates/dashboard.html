@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Panel{% endblock %}
+{% block content %}
+<div class="card auth-card p-4">
+  <h3 class="mb-3">Panel</h3>
+  <p>Hola {{ name }} ({{ role }}). Has iniciado sesión correctamente.</p>
+
+  {% if role == 'admin' %}
+    <div class="d-grid mt-3">
+      <a class="btn btn-primary" href="{{ url_for('admin') }}">Ir a Administración</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
