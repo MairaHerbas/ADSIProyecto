@@ -1,0 +1,7 @@
+{% extends '_base.html' %}
+{% for equipo in equipos %}
+    <div>
+        <h2>{{ equipo.nombre_equipo }}</h2>
+        <a href="{{ url_for('consultar_equipo', equipo_id=equipo.id) }}">Ver Equipo</a>
+    </div>
+{% endfor %}
