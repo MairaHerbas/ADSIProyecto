@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Buscar Amigos{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    
+    <div class="card auth-card p-4 shadow-sm mb-4">
+      <h3 class="mb-3 text-center">Buscar Usuario</h3>
+      
+      <form method="post">
+        <div class="mb-3">
+          <label for="username_busqueda" class="form-label">Nombre de usuario:</label>
+          <input type="text" class="form-control" id="username_busqueda" name="username_busqueda" 
+                 placeholder="Escribe un username..." required>
+        </div>
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary">Buscar</button>
+        </div>
+      </form>
+    </div>
+
+    {% if resultado %}
+    <div class="card auth-card p-4 shadow-sm">
+      <h4 class="mb-3 text-center">Resultado de la Búsqueda</h4>
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="mb-0">{{ resultado.name }}</h5>
+          <small class="text-muted">@{{ resultado.username }}</small>
+        </div>
+        <div>
+          <form action="{{ url_for('enviar_solicitud', user_id=resultado.id) }}" method="post">
+            <button type="submit" class="btn btn-success btn-sm">Enviar Solicitud</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    {% elif query %}
+    <div class="alert alert-warning text-center" role="alert">
+      No se ha encontrado ningún usuario con el nombre: <strong>{{ query }}</strong>
+    </div>
+    {% endif %}
+    </div>
+</div>
+    <p class="text-center mt-4">
+      <a href="{{ url_for('gestionar_amistades') }}">Volver a Amistades</a>
+    </p>
+{% endblock %}

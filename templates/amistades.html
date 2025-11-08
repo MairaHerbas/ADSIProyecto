@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Gestionar Amistades{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card auth-card p-4 shadow-sm">
+      <h3 class="mb-3 text-center">Gestionar Amistades</h3>
+
+      <div class="d-grid mt-3">
+        <a href="{{ url_for('ver_amigos') }}" class="btn btn-outline-primary">
+          Mostrar Amistades
+        </a>
+      </div>
+
+      <div class="d-grid mt-2">
+        <a href="{{ url_for('buscar_amigos') }}" class="btn btn-outline-primary">
+          Enviar Solicitud de Amistad
+        </a>
+      </div>
+
+      <div class="d-grid mt-2">
+        <a href="{{ url_for('ver_solicitudes') }}" class="btn btn-outline-primary">
+            Solicitudes Recibidas
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

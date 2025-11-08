@@ -1,14 +1,30 @@
 {% extends "base.html" %}
 {% block title %}Panel{% endblock %}
 {% block content %}
-<div class="card auth-card p-4">
-  <h3 class="mb-3">Panel</h3>
-  <p>Hola {{ name }} ({{ role }}). Has iniciado sesión correctamente.</p>
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card auth-card p-4 shadow-sm">
+      <h3 class="mb-3 text-center">Panel de Control</h3>
+      <p class="text-center text-muted">Hola {{ name }} ({{ role }}).</p>
 
-  {% if role == 'admin' %}
-    <div class="d-grid mt-3">
-      <a class="btn btn-primary" href="{{ url_for('admin') }}">Ir a Administración</a>
+      <div class="d-grid mt-3">
+        <a class="btn btn-outline-primary" href="{{ url_for('edit_profile') }}">
+          Actualizar mis datos
+        </a>
+      </div>
+
+      <div class="d-grid mt-2">
+        <a class="btn btn-outline-primary" href="{{ url_for('gestionar_amistades') }}">
+          Gestionar Amistades
+        </a>
+      </div>
+
+      {% if role == 'admin' %}
+        <div class="d-grid mt-2">
+          <a class="btn btn-outline-primary" href="{{ url_for('admin') }}">Ir a Administración</a>
+        </div>
+      {% endif %}
     </div>
-  {% endif %}
+  </div>
 </div>
 {% endblock %}
