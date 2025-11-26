@@ -46,6 +46,9 @@ def register():
         if not name or not username or not email or not password or not confirm:
             flash("Rellena todos los campos.", "warning")
             return render_template("register.html")
+        if "@" not in email or "." not in email:
+            flash("Por favor, introduce un correo electrónico válido.", "warning")
+            return render_template("register.html")
         if password != confirm:
             flash("Las contraseñas no coinciden.", "warning")
             return render_template("register.html")
