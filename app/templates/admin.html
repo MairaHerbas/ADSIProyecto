@@ -56,10 +56,10 @@
                     </td>
                     <td class="text-nowrap">
                         {% if user.status == 'pendiente' %}
-                            <form action="{{ url_for('approve_user', user_id=user.id) }}" method="post" style="display:inline-block; margin-right: 5px;">
+                            <form action="{{ url_for('admin.approve_user', user_id=user.id) }}" method="post" style="display:inline-block; margin-right: 5px;">
                                 <button type="submit" class="btn btn-success btn-sm">Aprobar</button>
                             </form>
-                            <form action="{{ url_for('reject_user', user_id=user.id) }}" method="post" style="display:inline-block;">
+                            <form action="{{ url_for('admin.reject_user', user_id=user.id) }}" method="post" style="display:inline-block;">
                                 <button type="submit" class="btn btn-danger btn-sm">Rechazar</button>
                             </form>
                         {% endif %}
@@ -67,11 +67,11 @@
                         {% if user.id != session['user_id'] and user.status == 'activo' %}
 
                             {% if user.role == 'user' %}
-                                <form action="{{ url_for('promote_user', user_id=user.id) }}" method="post" style="display:inline-block; margin-right: 5px;">
+                                <form action="{{ url_for('admin.promote_user', user_id=user.id) }}" method="post" style="display:inline-block; margin-right: 5px;">
                                     <button type="submit" class="btn btn-info btn-sm">Promover a Admin</button>
                                 </form>
                             {% elif user.role == 'admin' %}
-                                <form action="{{ url_for('demote_user', user_id=user.id) }}" method="post" style="display:inline-block;">
+                                <form action="{{ url_for('admin.demote_user', user_id=user.id) }}" method="post" style="display:inline-block;">
                                     <button type="submit" class="btn btn-warning btn-sm">Degradar a User</button>
                                 </form>
                             {% endif %}
@@ -80,7 +80,7 @@
 
                         {% if user.id != session['user_id'] %}
                             <form
-                                action="{{ url_for('delete_user', user_id=user.id) }}"
+                                action="{{ url_for('admin.delete_user', user_id=user.id) }}"
                                 method="post"
                                 style="display:inline-block;"
                                 onsubmit="return confirm('¿Estás SEGURO de que quieres borrar a {{ user.name }}? Esta acción es permanente y no se puede deshacer.');">
