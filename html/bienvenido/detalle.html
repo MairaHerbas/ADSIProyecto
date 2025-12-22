@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ poke['nombre'] }}</title>
+    <link rel="stylesheet" href="/static/css/index.css">
+</head>
+<body>
+
+    <a href="/" class="btn-volver">← Volver al listado</a>
+
+    <div class="ficha-tecnica">
+        <div class="columna-img">
+            <h1>{{ poke['nombre'] }} <span style="color:#888; font-size:0.6em">#{{ poke['id'] }}</span></h1>
+            <img src="{{ poke['imagen_url'] }}">
+            <div style="margin-top:10px;">
+                <strong>Tipos:</strong> {{ poke['tipos'] }}
+            </div>
+        </div>
+
+        <div class="columna-info">
+            <h2>Estadísticas</h2>
+
+            <div class="stat-row">
+                <label>HP</label>
+                <div class="bar-bg"><div class="bar-fill" style="width: {{ poke['hp'] }}px; background:#ff5959;"></div></div>
+                <span style="margin-left:10px">{{ poke['hp'] }}</span>
+            </div>
+            <div class="stat-row">
+                <label>Ataque</label>
+                <div class="bar-bg"><div class="bar-fill" style="width: {{ poke['ataque'] }}px; background:#f5ac78;"></div></div>
+                <span style="margin-left:10px">{{ poke['ataque'] }}</span>
+            </div>
+            <div class="stat-row">
+                <label>Defensa</label>
+                <div class="bar-bg"><div class="bar-fill" style="width: {{ poke['defensa'] }}px; background:#fae078;"></div></div>
+                <span style="margin-left:10px">{{ poke['defensa'] }}</span>
+            </div>
+            <div class="stat-row">
+                <label>Velocidad</label>
+                <div class="bar-bg"><div class="bar-fill" style="width: {{ poke['velocidad'] }}px; background:#9db7f5;"></div></div>
+                <span style="margin-left:10px">{{ poke['velocidad'] }}</span>
+            </div>
+
+            <hr>
+            <p><strong>Altura:</strong> {{ poke['altura'] }} m &nbsp; | &nbsp; <strong>Peso:</strong> {{ poke['peso'] }} kg</p>
+            <p><strong>Habilidades:</strong> {{ poke['habilidades'] }}</p>
+            <p><strong>Movimientos:</strong> <small>{{ poke['movimientos'] }}</small></p>
+        </div>
+    </div>
+
+</body>
+</html>

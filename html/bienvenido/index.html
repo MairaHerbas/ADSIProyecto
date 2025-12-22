@@ -1,24 +1,76 @@
-{% extends '_base.html' %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pokedex</title>
+    <link rel="stylesheet" href="/static/css/index.css">
+    <style>
+        /* Un poco de estilo rápido para los enlaces de sesión */
+        .auth-links {
+            text-align: right;
+            padding: 10px;
+            background-color: #f8f9fa;
+            margin-bottom: 20px;
+        }
+        .auth-links a {
+            margin-left: 15px;
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
 
-{% block title %}Inicio - App Pokémon{% endblock %}
-
-{% block content %}
-    <div class="welcome-container">
-
-        <header class="welcome-header">
-            <h1>Bienvenido/a</h1>
-        </header>
-
-        <div class="welcome-actions">
-
-            <a href="{{ url_for('registro') }}" class="btn btn-primary btn-full">
-                Registrarse
-            </a>
-
-            <a href="{{ url_for('iniciar_sesion') }}" class="btn btn-secondary btn-full">
-                Iniciar Sesión
-            </a>
-
-        </div>
+    <div class="auth-links">
+        <a href="/iniciar_sesion">Iniciar Sesión</a>
+        <a href="/registro">Registrarse</a>
     </div>
-{% endblock %}
+
+    <div class="search-container">
+        <h1>Pokedex Nacional</h1>
+
+        <form action="/" method="get">
+            <input type="text" name="q" placeholder="Buscar nombre..." value="{{ q }}">
+
+            <select name="tipo">
+                <option value="">Todos los tipos</option>
+
+                {% for tipo in lista_tipos %}
+                    <option value="{{ tipo }}" {% if tipo_sel == tipo %}selected{% endif %}>
+                        {{ tipo }}
+                    </option>
+                {% endfor %}
+
+            </select>
+
+            <select name="gen">
+                <option value="">Todas las Gen...</option>
+                <option value="1" {% if gen_sel == '1' %}selected{% endif %}>Gen 1</option>
+                <option value="2" {% if gen_sel == '2' %}selected{% endif %}>Gen 2</option>
+                <option value="3" {% if gen_sel == '3' %}selected{% endif %}>Gen 3</option>
+            </select>
+
+            <button type="submit">Buscar</button>
+        </form>
+    </div>
+
+    <div class="pokedex-grid">
+        {% for poke in pokemons %}
+        <a href="/pokemon/{{ poke['id'] }}" class="poke-card-link">
+            <div class="poke-card">
+                <small>#{{ poke['id'] }}</small>
+                <img src="{{ poke['imagen_url'] }}" loading="lazy" alt="{{ poke['nombre'] }}">
+                <h3>{{ poke['nombre'] }}</h3>
+                <span class="tipo-tag">{{ poke['tipos'].split(',')[0] }}</span>
+            </div>
+        </a>
+        {% else %}
+            <div style="text-align: center; width: 100%; margin-top: 20px;">
+                <p>No se encontraron Pokémon con esos filtros.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+</body>
+</html>

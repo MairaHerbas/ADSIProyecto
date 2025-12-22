@@ -95,3 +95,27 @@ main {
     color: #007bff;
     border: 1px solid #007bff;
 }
+
+/* Buscador */
+.search-container { text-align: center; margin-bottom: 30px; }
+.search-container input, .search-container select { padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #ccc; }
+.search-container button { padding: 10px 20px; background: #ff5959; color: white; border: none; border-radius: 5px; cursor: pointer; }
+
+/* Grid de Cartas */
+.pokedex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+.poke-card-link { text-decoration: none; color: inherit; }
+.poke-card { background: white; padding: 15px; border-radius: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: 0.3s; }
+.poke-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+.poke-card img { width: 120px; height: 120px; object-fit: contain; }
+.tipo-tag { background: #eee; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; color: #555; }
+
+/* Vista Detalle */
+.btn-volver { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #333; font-weight: bold; }
+.ficha-tecnica { background: white; max-width: 800px; margin: 0 auto; padding: 40px; border-radius: 20px; display: flex; gap: 40px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+.columna-img { text-align: center; flex: 1; }
+.columna-img img { width: 100%; max-width: 300px; }
+.columna-info { flex: 1.5; }
+.stat-row { display: flex; align-items: center; margin-bottom: 8px; }
+.stat-row label { width: 80px; font-weight: bold; }
+.bar-bg { flex-grow: 1; background: #eee; height: 10px; border-radius: 5px; overflow: hidden; }
+.bar-fill { height: 100%; background: #4caf50; }
