@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Bienvenido - Login{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card auth-card p-4 shadow-sm">
+      <h3 class="text-center mb-3">Iniciar Sesión</h3>
+
+      <form method="post">
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input type="email" class="form-control" id="email" name="email" required>
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Contraseña</label>
+          <input type="password" class="form-control" id="password" name="password" required>
+        </div>
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary">Entrar</button>
+        </div>
+      </form>
+
+      <p class="text-center mt-3 mb-0">
+        ¿No tienes cuenta?
+        <a href="{{ url_for('auth.register') }}">Regístrate aquí</a>.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

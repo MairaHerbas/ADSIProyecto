@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Amistades{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Mis Amistades</h1>
+
+    {% if lista_amigos %}
+    
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-bordered">
+            <thead class="mi-tabla-header">
+                <tr>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Nombre de Usuario</th>
+                    <th scope="col">Email</th>
+
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for amigo in lista_amigos %}
+                <tr>
+                    <td>{{ amigo.name }}</td>
+                    <td>@{{ amigo.username }}</td>
+                    <td>{{ amigo.email }}</td>
+                    <td class="text-center"> <form
+                            action="{{ url_for('friends.eliminar_amigo', friend_id=amigo.id) }}"
+                            method="post"
+
+                            onsubmit="return confirm('¿Estás seguro de que quieres eliminar a @{{ amigo.username }} de tu lista de amigos?');">
+
+                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+    <div class="alert alert-info text-center" role="alert">
+      Todavía no tienes amigos. ¡Busca nuevos usuarios y envía solicitudes!
+    </div>
+    {% endif %}
+
+    <p class="text-center mt-4">
+      <a href="{{ url_for('friends.gestionar_amistades') }}">Volver a Amistades</a>
+    </p>
+
+</div>
+{% endblock %}
