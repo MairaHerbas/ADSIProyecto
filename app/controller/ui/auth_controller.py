@@ -14,7 +14,7 @@ def home():
 
         if not user or not user.check_password(password):
             flash("Credenciales incorrectas.", "danger")
-            return render_template("usuario/welcome_login.html")
+            return render_template("miguel-adrian/welcome_login.html")
 
         if user.status == 'activo':
             session["user_id"] = user.id
@@ -24,9 +24,9 @@ def home():
             return redirect(url_for("main.dashboard"))
         else:
             flash('Cuenta pendiente.', 'warning')
-            return render_template("usuario/welcome_login.html")
+            return render_template("miguel-adrian/welcome_login.html")
 
-    return render_template("usuario/welcome_login.html")
+    return render_template("miguel-adrian/index.html")
 
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():

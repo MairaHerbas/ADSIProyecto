@@ -21,6 +21,7 @@ class PokemonLoader:
     def inicializar_db(self):
         conn = self._conectar()
         cursor = conn.cursor()
+        # IMPORTANTE: Definimos las 13 columnas exactas que luego insertamos
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS pokemons (
                 id INTEGER PRIMARY KEY,

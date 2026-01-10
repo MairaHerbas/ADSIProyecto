@@ -20,14 +20,14 @@ def pokedex_buscador():
     if g: query = query.filter_by(generacion=g)
 
     pokemons = query.limit(100).all()
-    return render_template('bienvenido/index.html', pokemons=pokemons, q=q, tipo_sel=t, gen_sel=g)
+    return render_template('miguel-adrian/index.html', pokemons=pokemons, q=q, tipo_sel=t, gen_sel=g)
 
 
 @pokemon_bp.route('/pokedex/<int:id>')
 @login_required
 def pokedex_detalle(id):
     poke = Pokemon.query.get_or_404(id)
-    return render_template('bienvenido/detalle.html', poke=poke)
+    return render_template('miguel-adrian/index.html', poke=poke)
 
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
