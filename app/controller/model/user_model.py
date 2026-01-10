@@ -12,13 +12,11 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
 
-
-# Tabla intermedia Amistades (Repo 2)
+# Tabla intermedia Amistades
 friendship = db.Table('friendship',
                       db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
                       db.Column('friend_id', db.Integer, db.ForeignKey('user.id'), primary_key=True)
                       )
-
 
 class User(db.Model):
     __tablename__ = 'user'
@@ -59,3 +57,13 @@ class FriendRequest(db.Model):
 
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_requests')
     receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_requests')
+
+class Event(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    event_type = db.Column(db.String(50), nullable=False)  # "CREACION_EQUIPO", etc.
+    description = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Esta relación es necesaria para el dashboard (Changelog)
+    # user = db.relationship... (ya debería estar definida en User como backref)
