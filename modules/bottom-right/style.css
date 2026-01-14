@@ -1,0 +1,52 @@
+@import url('css/layout.css');
+@import url('css/lists.css');
+@import url('css/components.css');
+@import url('css/notifications.css');
+
+/* --- ADAPTACIÓN DINÁMICA DE TABS (Glider) --- */
+/* Cuando se activa el modo ADMIN (clase .has-admin) */
+.main-toggle.has-admin .br-toggle-btn {
+    width: 33.333%;
+    font-size: 0.9cqw;
+}
+.main-toggle.has-admin .br-glider {
+    width: 33.333%;
+}
+
+/* Posiciones del Glider para 3 pestañas */
+.main-toggle.has-admin .br-toggle-btn[data-target="friends"].active ~ .br-glider { transform: translateX(0%); }
+.main-toggle.has-admin .br-toggle-btn[data-target="notifications"].active ~ .br-glider { transform: translateX(100%); }
+.main-toggle.has-admin .br-toggle-btn[data-target="admin"].active ~ .br-glider { transform: translateX(200%); }
+
+/* --- BOTONES DE ACCIÓN (ADMIN & AMIGOS) --- */
+/* Usamos una clase genérica para mantener consistencia */
+.btn-action-icon {
+    width: 2cqw; height: 2cqw;
+    border-radius: 4px;
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer; transition: all 0.2s;
+    flex-shrink: 0;
+    margin-left: 5px;
+}
+
+/* Icono Basura */
+.btn-trash {
+    background-color: rgba(255, 100, 100, 0.15);
+}
+.btn-trash:hover { background-color: var(--dp-danger); }
+.btn-trash::after {
+    content: ''; width: 60%; height: 60%; background-color: #fff;
+    mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>') no-repeat center/contain;
+    -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>') no-repeat center/contain;
+}
+
+/* Icono Aprobar (Check) */
+.btn-approve {
+    background-color: rgba(100, 255, 100, 0.15);
+}
+.btn-approve:hover { background-color: var(--dp-success); }
+.btn-approve::after {
+    content: ''; width: 60%; height: 60%; background-color: #fff;
+    mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>') no-repeat center/contain;
+    -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>') no-repeat center/contain;
+}

@@ -1,0 +1,14 @@
+Para crear el entorno virtual
+python3 -m venv venv
+
+Para activar el entorno virtual
+source venv/bin/activate
+
+Instalar Flask
+pip install flask
+
+Ejecutar:
+python3 app.py
+
+Entrar en:
+http://127.0.0.1:5000/

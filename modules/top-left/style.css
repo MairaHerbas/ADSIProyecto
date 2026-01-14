@@ -1,0 +1,81 @@
+.module-tl {
+    background-color: var(--color-tl);
+    
+    /* Layout Flex para alinear imagen y texto */
+    display: flex;
+    flex-direction: row;
+    align-items: center; /* Centrado vertical perfecto */
+    
+    /* El padding crea el margen interno idéntico arriba, abajo e izquierda */
+    padding: var(--gap-size);
+    
+    /* Espacio entre la foto y el texto */
+    gap: var(--gap-size);
+}
+
+/* --- LOGICA DE LA IMAGEN --- */
+.tl-avatar-container {
+    height: 100%; /* Ocupa toda la altura disponible dentro del padding */
+    aspect-ratio: 1 / 1; /* Fuerza a que sea cuadrada */
+    flex-shrink: 0; /* Evita que la imagen se aplaste si falta espacio */
+}
+
+.tl-avatar-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%; /* Círculo perfecto */
+    display: block;
+    
+    /* Un borde sutil para que resalte sobre el color pastel */
+    border: calc(0.2 * var(--unit)) solid rgba(255,255,255,0.6);
+}
+
+/* --- LOGICA DEL TEXTO --- */
+.tl-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    /* Para que el texto largo no rompa el layout, usamos min-width 0 */
+    min-width: 0; 
+}
+
+#tl-username {
+    /* "Fuente estética donde todos los caracteres miden lo mismo" -> Monospace */
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 700;
+    
+    /* Color oscuro suave para contraste con pastel */
+    color: #4a4a4a;
+    
+    /* Tamaño reactivo al ancho del contenedor total */
+    font-size: 2cqw; 
+    line-height: 1.2;
+    
+    /* Puntos suspensivos si el nombre es larguísimo */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+}
+
+#tl-stats {
+    font-family: 'Courier New', Courier, monospace;
+    color: #666;
+    font-size: 1.2cqw; /* Más pequeño que el nombre */
+    margin-top: calc(0.5 * var(--unit));
+}
+
+/* --- INTERACTIVIDAD (MODAL TRIGGER) --- */
+.tl-avatar-container, 
+#tl-username {
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.tl-avatar-container:hover, 
+#tl-username:hover {
+    opacity: 0.8;
+    transform: scale(1.02); /* Efecto sutil de "clicable" */
+}

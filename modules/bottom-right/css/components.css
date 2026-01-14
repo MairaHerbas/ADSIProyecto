@@ -1,0 +1,94 @@
+/* --- BOTONES DE ACCIÓN (Pendientes) --- */
+.actions-wrapper { position: relative; z-index: 2; display: flex; gap: calc(0.8 * var(--unit)); }
+
+.action-sq-btn {
+    width: calc(2.2 * var(--unit)); height: calc(2.2 * var(--unit));
+    border-radius: calc(0.6 * var(--unit));
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer; transition: transform 0.1s;
+}
+.action-sq-btn:hover { transform: scale(1.1); }
+.action-sq-btn:active { transform: scale(0.95); }
+
+.btn-accept { background-color: #70e088; }
+.btn-reject { background-color: #ff8585; }
+
+/* Máscaras de Iconos */
+.btn-icon-mask {
+    width: 60%; height: 60%;
+    background-color: rgba(255, 255, 255, 0.9);
+    -webkit-mask-size: contain; mask-size: contain;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    -webkit-mask-position: center; mask-position: center;
+}
+.btn-accept .btn-icon-mask { -webkit-mask-image: url('/assets/images/icon-tick.png'); mask-image: url('/assets/images/icon-tick.png'); }
+.btn-reject .btn-icon-mask { -webkit-mask-image: url('/assets/images/icon-trash-1.png'); mask-image: url('/assets/images/icon-trash-1.png'); transition: mask-image 0.2s; }
+.btn-reject:hover .btn-icon-mask { -webkit-mask-image: url('/assets/images/icon-trash-2.png'); mask-image: url('/assets/images/icon-trash-2.png'); }
+
+/* --- INPUT BUSCADOR (GENERALIZADO) --- */
+.search-container {
+    padding-bottom: calc(0.8 * var(--unit));
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    margin-bottom: calc(0.5 * var(--unit));
+}
+
+/* CAMBIO: Usamos clase en vez de ID para que sirva a todos */
+.std-search-input {
+    width: 100%;
+    padding: calc(0.8 * var(--unit));
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: calc(0.5 * var(--unit));
+    background-color: rgba(255,255,255,0.6);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.2cqw;
+    color: #444; outline: none; transition: background-color 0.2s;
+}
+.std-search-input:focus { background-color: #fff; border-color: rgba(0,0,0,0.2); }
+
+/* --- BOTÓN SOLICITAR AMISTAD --- */
+.btn-request {
+    width: calc(8 * var(--unit)); 
+    height: calc(2.2 * var(--unit));
+    background-color: #aeb8db; 
+    color: white; border: none; border-radius: calc(0.4 * var(--unit));
+    font-family: 'Courier New', Courier, monospace; font-weight: bold; font-size: 1.0cqw;
+    cursor: pointer; position: relative; z-index: 2; transition: background-color 0.2s, transform 0.1s;
+    display: flex; justify-content: center; align-items: center;
+}
+.btn-request:hover { background-color: #8c9ac5; }
+.btn-request:active { transform: scale(0.95); }
+
+.btn-request.sent { background-color: #70e088; color: white; }
+.btn-request.sent:hover { background-color: #ff8585; }
+.btn-request.sent:hover span { display: none; }
+.btn-request.sent:hover::before { content: "CANCELAR"; }
+
+/* Botón Eliminar Amigo (Lista Principal) */
+.btn-remove-friend {
+    width: calc(2.0 * var(--unit));
+    height: calc(2.0 * var(--unit));
+    border-radius: calc(0.5 * var(--unit));
+    background-color: #ff8585; 
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer; border: none;
+    margin-left: calc(0.5 * var(--unit));
+    transition: transform 0.1s;
+}
+.btn-remove-friend:hover { transform: scale(1.1); }
+.btn-remove-friend:active { transform: scale(0.95); }
+
+.btn-remove-friend .btn-icon-mask {
+    -webkit-mask-image: url('/assets/images/icon-trash-1.png');
+    mask-image: url('/assets/images/icon-trash-1.png');
+    background-color: white;
+}
+.btn-remove-friend:hover .btn-icon-mask {
+    -webkit-mask-image: url('/assets/images/icon-trash-2.png');
+    mask-image: url('/assets/images/icon-trash-2.png');
+}
+
+/* Icono Refresh */
+.icon-refresh {
+    -webkit-mask-image: url('/assets/images/icon-refresh.png');
+    mask-image: url('/assets/images/icon-refresh.png');
+}

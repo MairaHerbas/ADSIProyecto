@@ -1,0 +1,39 @@
+:root {
+    /* --- DEFINICIÓN DE VARIABLES BASE (INPUTS) --- */
+    /* Relación de Aspecto 16:9 (16 / 9 = 1.7777...) */
+    --ratio-num: 1.77777778; 
+    
+    /* --- PARÁMETROS DE DISEÑO (Configurables) --- */
+    
+    /* Grosor del margen/espaciado (en unidades relativas al ancho total) */
+    /* Si la pantalla mide 1000px, 1.5 significa 15px */
+    --param-spacing: 1.5; 
+    
+    /* Radio de las esquinas EXTERIORES (Capa 0) */
+    --param-radius-outer: 3.0;
+
+    /* --- CÁLCULOS AUTOMÁTICOS (No tocar) --- */
+    
+    /* 1. Definimos la unidad de medida basada en el contenedor padre */
+    /* cqw = 1% del ancho del contenedor principal. */
+    --unit: 1cqw; 
+
+    /* 2. Convertimos los parámetros a unidades reales */
+    /* Al usar var(--unit) para vertical y horizontal, garantizamos medidas exactas en píxeles */
+    --gap-size: calc(var(--param-spacing) * var(--unit));
+    
+    /* 3. Lógica de Radios */
+    --radius-outer: calc(var(--param-radius-outer) * var(--unit));
+    
+    /* LÓGICA DE CONCENTRICIDAD: */
+    /* Para que el módulo interno tenga el mismo centro que el borde externo: */
+    /* Radio Interno = Radio Externo - Margen */
+    --radius-inner: calc(var(--radius-outer) - var(--gap-size));
+
+    /* --- PALETA DE COLORES --- */
+    --color-bg: #fdfdfd;
+    --color-tl: #ffb7b2;
+    --color-tr: #b5ead7;
+    --color-bl: #c7ceea;
+    --color-br: #e2f0cb;
+}

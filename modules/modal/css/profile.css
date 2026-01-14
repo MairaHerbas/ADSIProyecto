@@ -1,0 +1,61 @@
+:root {
+    --dp-bg-row: #3a3f4b;
+    --dp-accent: #7885cb;
+    --dp-accent-light: #b3bdef;
+    --dp-success: #98c379;
+    --dp-danger: #e06c75;
+    --dp-label: #9ca3af;
+    --dp-value: #f3f4f6;
+}
+
+.profile-container {
+    padding: calc(2 * var(--unit));
+    display: flex; flex-direction: column; gap: calc(1 * var(--unit)); height: 100%;
+    font-family: 'Courier New', Courier, monospace; 
+}
+
+.profile-title {
+    text-align: center; font-size: 1.8cqw; color: var(--dp-accent-light);
+    margin-bottom: calc(1 * var(--unit)); letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+.profile-row {
+    background-color: var(--dp-bg-row); padding: calc(1 * var(--unit));
+    border-radius: calc(0.8 * var(--unit));
+    display: flex; justify-content: space-between; align-items: center;
+    min-height: calc(4.5 * var(--unit));
+}
+
+.data-group { display: flex; flex-direction: column; gap: 6px; flex: 1; margin-right: 10px; }
+.data-label { font-size: 0.9cqw; color: var(--dp-label); font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; }
+.data-value { font-size: 1.2cqw; color: var(--dp-value); border-bottom: 2px solid transparent; }
+
+/* Inputs y Botones Perfil */
+.edit-input {
+    font-family: 'Courier New', Courier, monospace; font-size: 1.2cqw; color: #fff;
+    background-color: rgba(0,0,0,0.2); border: none; border-bottom: 2px solid var(--dp-accent);
+    padding: 4px; width: 100%; outline: none;
+}
+
+.edit-btn {
+    width: calc(3 * var(--unit)); height: calc(3 * var(--unit));
+    background-color: var(--dp-accent); border-radius: calc(0.6 * var(--unit));
+    border: none; cursor: pointer; display: flex; justify-content: center; align-items: center;
+    transition: filter 0.2s; flex-shrink: 0;
+}
+.edit-btn:hover { filter: brightness(1.1); }
+
+.edit-icon {
+    width: 60%; height: 60%; background-color: var(--dp-accent-light);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center;
+}
+
+.action-group { display: flex; gap: 8px; }
+.action-btn { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-family: 'Courier New', Courier, monospace; font-weight: bold; font-size: 0.9cqw; color: #333; transition: transform 0.1s; }
+.action-btn:active { transform: scale(0.95); }
+.btn-accept { background-color: var(--dp-success); }
+.btn-accept:hover { background-color: #aadd88; }
+.btn-cancel { background-color: var(--dp-danger); }
+.btn-cancel:hover { background-color: #f08c95; }

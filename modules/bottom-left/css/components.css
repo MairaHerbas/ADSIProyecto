@@ -1,0 +1,18 @@
+/* --- BOTÓN GRANDE --- */
+.bl-action-btn {
+    width: 100%; height: calc(5 * var(--unit));
+    background-color: #aeb8db; border: none; cursor: pointer;
+    font-family: 'Courier New', Courier, monospace; font-weight: bold; color: #fff;
+    font-size: 1.5cqw; border-radius: 999cqw; flex-shrink: 0;
+    transition: background-color 0.2s, transform 0.1s;
+}
+.bl-action-btn:hover { background-color: #9aa5cc; }
+.bl-action-btn:active { transform: scale(0.98); }
+
+/* --- ICONOS SILUETA --- */
+.poke-icon {
+    width: 1.4cqw; height: 1.4cqw;
+    background-image: url('/assets/images/poke-silhouette.png');
+    background-size: contain; background-repeat: no-repeat; background-position: center;
+    opacity: 0.6;
+}
