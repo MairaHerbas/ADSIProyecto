@@ -1,0 +1,111 @@
+.module-br {
+    background-color: var(--color-br);
+    padding: var(--gap-size);
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-size);
+    
+    /* Variables locales de radio */
+    --calc-radius: calc(var(--radius-inner) - var(--gap-size));
+    --radius-nested-top: max(var(--calc-radius), 1cqw);
+}
+
+/* --- MAIN TOGGLE (Amistades vs Notificaciones) --- */
+.br-toggle-container {
+    position: relative; width: 100%; 
+    height: calc(5 * var(--unit));
+    background-color: #bccba0; /* CAMBIO: Fondo más oscuro para contraste */
+    border-radius: 999cqw; display: flex; overflow: hidden; flex-shrink: 0;
+}
+
+.br-glider {
+    position: absolute; top: 0; left: 0; height: 100%; width: 50%;
+    background-color: #fdfdfd; border-radius: 999cqw;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* CAMBIO: Sombra suave */
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); z-index: 1;
+}
+
+/* Estados del Glider Principal */
+.br-toggle-container.state-friends .br-glider { transform: translateX(0); }
+.br-toggle-container.state-notifications .br-glider { transform: translateX(100%); }
+
+.br-toggle-btn {
+    flex: 1; background: transparent; border: none; cursor: pointer; z-index: 2;
+    font-family: 'Courier New', Courier, monospace; font-weight: 700; font-size: 1.3cqw;
+    color: #5a6548; transition: color 0.3s;
+}
+.br-toggle-btn.active { color: #3a422e; }
+
+
+/* --- CONTENT AREA & PANELS --- */
+.br-content-area {
+    flex-grow: 1; width: 100%; position: relative;
+    border-top-left-radius: var(--radius-nested-top);
+    border-top-right-radius: var(--radius-nested-top);
+    border-bottom-left-radius: calc(0.5 * var(--unit));
+    border-bottom-right-radius: calc(0.5 * var(--unit));
+    background-color: rgba(255, 255, 255, 0.4); 
+    overflow: hidden;
+}
+.br-panel { width: 100%; height: 100%; display: flex; flex-direction: column; }
+
+
+/* --- SUB TOGGLE (Amigos/Pendientes/Añadir) --- */
+.br-subtoggle-container {
+    position: relative; width: 100%; height: calc(3.5 * var(--unit));
+    background-color: rgba(255, 255, 255, 0.3);
+    border-bottom: 1px solid rgba(0,0,0,0.1); 
+    display: flex; overflow: hidden; flex-shrink: 0;
+}
+
+.br-subglider {
+    position: absolute; top: 0; left: 0; height: 100%; width: 33.333%;
+    background-color: #fff; 
+    border-bottom: 3px solid #6a7558; /* CAMBIO: Color más visible */
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); z-index: 1;
+}
+
+/* Estados del Sub-Glider */
+.br-subtoggle-container.pos-0 .br-subglider { transform: translateX(0%); }
+.br-subtoggle-container.pos-1 .br-subglider { transform: translateX(100%); }
+.br-subtoggle-container.pos-2 .br-subglider { transform: translateX(200%); }
+
+.br-subtoggle-btn {
+    flex: 1; background: transparent; border: none; cursor: pointer; z-index: 2;
+    font-family: 'Courier New', Courier, monospace; font-weight: bold; font-size: 1.1cqw;
+    color: #6a7558; transition: color 0.3s;
+}
+.br-subtoggle-btn.active { color: #2e3326; }
+
+/* Wrapper de las sub-páginas */
+/* Wrapper de las sub-páginas */
+.br-subcontent-wrapper {
+    flex-grow: 1;
+    position: relative;
+    padding: var(--gap-size);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Importante para que no desborde el padre */
+}
+
+.br-subpage {
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column; /* Asegura que buscador y lista se apilen */
+    min-height: 0; /* TRUCO FLEXBOX: Crucial para que el scroll funcione dentro de flex */
+}
+
+.br-subpage.active {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+}
+
+/* CLASE NUEVA: Para asegurar que la lista de resultados ocupe el resto del espacio */
+.search-results-area {
+    flex-grow: 1;
+    min-height: 0; /* Necesario para que el hijo (ul) pueda hacer scroll */
+    position: relative;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }

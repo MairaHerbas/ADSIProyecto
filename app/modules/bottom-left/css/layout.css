@@ -1,0 +1,47 @@
+.module-bl {
+    background-color: var(--color-bl); /* Azul Pastel IMPORTANTE */
+    padding: var(--gap-size);
+    
+    /* Aseguramos que ocupe el espacio */
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    /* Variables de radio */
+    --calc-radius: calc(var(--radius-inner) - var(--gap-size));
+    --radius-nested: max(var(--calc-radius), 1cqw); 
+}
+
+.bl-view {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- CABECERA --- */
+.bl-header {
+    width: 100%;
+    height: calc(5 * var(--unit)); 
+    background-color: rgba(255, 255, 255, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    border-top-left-radius: var(--radius-nested);
+    border-top-right-radius: var(--radius-nested);
+    border-bottom-left-radius: calc(0.5 * var(--unit));
+    border-bottom-right-radius: calc(0.5 * var(--unit));
+    
+    flex-shrink: 0;
+}
+
+.bl-header h3 {
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 700;
+    color: #556;
+    font-size: 1.5cqw;
+    letter-spacing: 0.1em;
+    margin: 0;
+}

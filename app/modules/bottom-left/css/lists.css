@@ -1,0 +1,63 @@
+/* --- WRAPPER Y LISTA --- */
+.bl-list-wrapper {
+    flex-grow: 1;
+    position: relative;
+    margin-top: var(--unit);
+    margin-bottom: var(--unit);
+    margin-left: calc(1.5 * var(--unit));
+    margin-right: calc(1.5 * var(--unit));
+    overflow: hidden;
+}
+
+.bl-team-list {
+    list-style: none;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    padding-right: calc(0.8 * var(--unit)); 
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.8s ease;
+}
+.bl-team-list.scrolling { scrollbar-color: rgba(255, 255, 255, 0.9) rgba(0, 0, 0, 0.05); }
+
+/* Scrollbar Webkit */
+.bl-team-list::-webkit-scrollbar { width: calc(1.2 * var(--unit)); }
+.bl-team-list::-webkit-scrollbar-track { background-color: transparent; border-radius: 99px; margin-block: calc(0.5 * var(--unit)); transition: background-color 0.8s ease; }
+.bl-team-list::-webkit-scrollbar-thumb { background-color: transparent; border-radius: 99px; border: 2px solid transparent; background-clip: content-box; transition: background-color 0.8s ease; }
+.bl-team-list.scrolling::-webkit-scrollbar-track { background-color: rgba(0, 0, 0, 0.05); }
+.bl-team-list.scrolling::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.9); }
+
+/* --- ITEMS --- */
+.team-item {
+    position: relative; display: flex; justify-content: space-between; align-items: center;
+    padding: calc(1.1 * var(--unit)) calc(1 * var(--unit));
+    cursor: pointer; font-family: 'Courier New', Courier, monospace;
+}
+.team-item::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 50%; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent); }
+.team-item:last-child::after { display: none; }
+.team-item::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); transform: scaleX(0); transform-origin: center; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); z-index: 0; }
+.team-item:hover::before { transform: scaleX(1); }
+
+.team-name { font-weight: bold; color: #4a4a4a; font-size: 1.3cqw; position: relative; z-index: 1; }
+.team-mons { display: flex; gap: calc(0.3 * var(--unit)); position: relative; z-index: 1; }
+
+/* --- MÁSCARAS --- */
+.scroll-mask { position: absolute; left: 0; width: 100%; height: calc(3 * var(--unit)); pointer-events: none; z-index: 10; opacity: 0; transition: opacity 0.3s ease; }
+
+/* Especificidad para BL */
+.module-bl .mask-top { top: 0; background: linear-gradient(to bottom, var(--color-bl), transparent); }
+.module-bl .mask-bottom { bottom: 0; background: linear-gradient(to top, var(--color-bl), transparent); }
+
+.bl-list-wrapper.can-scroll-up .mask-top { opacity: 1; }
+.bl-list-wrapper.can-scroll-down .mask-bottom { opacity: 1; }
+
+.team-item {
+    /* ... (Mantenemos lo que tenías) ... */
+    transition: background-color 0.2s, transform 0.1s; /* Suavizar animaciones */
+}
+
+/* Efecto de pulsación al hacer click */
+.team-item:active {
+    transform: scale(0.98);
+    background-color: rgba(255, 255, 255, 0.6);
+}

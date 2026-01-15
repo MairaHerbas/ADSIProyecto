@@ -1,0 +1,67 @@
+/* Contenedor genérico de lista */
+.br-list-container { width: 100%; height: 100%; position: relative; overflow: hidden; }
+
+/* --- SCROLLBAR --- */
+.br-scroll-list {
+    list-style: none; width: 100%; height: 100%; overflow-y: auto;
+    padding-right: calc(0.5 * var(--unit));
+    scrollbar-color: transparent transparent; transition: scrollbar-color 0.8s ease;
+}
+.br-scroll-list.scrolling { scrollbar-color: rgba(0, 0, 0, 0.2) transparent; }
+
+.br-scroll-list::-webkit-scrollbar { width: calc(1.0 * var(--unit)); }
+.br-scroll-list::-webkit-scrollbar-track {
+    background-color: transparent; border-radius: 99px;
+    margin-block: calc(0.5 * var(--unit)); transition: background-color 0.8s ease;
+}
+.br-scroll-list::-webkit-scrollbar-thumb {
+    background-color: transparent; border-radius: 99px;
+    border: 2px solid transparent; background-clip: content-box; transition: background-color 0.8s ease;
+}
+.br-scroll-list.scrolling::-webkit-scrollbar-track { background-color: rgba(0, 0, 0, 0.05); }
+.br-scroll-list.scrolling::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.9); }
+
+/* --- ITEMS --- */
+.friend-item {
+    position: relative; display: flex; justify-content: space-between; align-items: center;
+    padding: calc(1.2 * var(--unit)) calc(0.5 * var(--unit));
+    cursor: default; font-family: 'Courier New', Courier, monospace;
+    transition: all 0.4s ease;
+}
+
+/* CAMBIO: Separador oscuro en vez de blanco */
+.friend-item::after {
+    content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 90%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1), transparent);
+}
+.friend-item:last-child::after { display: none; }
+
+/* Hover effect */
+.friend-item::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+    transform: scaleX(0); transform-origin: center; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); z-index: 0;
+}
+.friend-item:hover::before { transform: scaleX(1); }
+
+.item-name { font-weight: bold; color: #556; font-size: 1.3cqw; position: relative; z-index: 1; }
+
+/* --- MÁSCARAS DE SCROLL ESPECÍFICAS (Corrección conflicto) --- */
+.module-br .mask-top {
+    top: 0; position: absolute; left: 0; width: 100%; height: calc(2 * var(--unit)); pointer-events: none; z-index: 10; opacity: 0; transition: opacity 0.3s;
+    background: linear-gradient(to bottom, rgba(226, 240, 203, 1), transparent);
+}
+.module-br .mask-bottom {
+    bottom: 0; position: absolute; left: 0; width: 100%; height: calc(2 * var(--unit)); pointer-events: none; z-index: 10; opacity: 0; transition: opacity 0.3s;
+    background: linear-gradient(to top, rgba(226, 240, 203, 1), transparent);
+}
+.br-list-container.can-scroll-up .mask-top { opacity: 1; }
+.br-list-container.can-scroll-down .mask-bottom { opacity: 1; }
+
+/* Animación de borrado */
+.collapsed-item {
+    max-height: 0 !important; opacity: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; margin: 0 !important; pointer-events: none;
+}
+.text-success { color: #5cb85c !important; transform: translateX(5px); }
+.text-error { color: #d9534f !important; text-decoration: line-through; opacity: 0.6; }

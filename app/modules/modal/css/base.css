@@ -1,0 +1,31 @@
+.hidden { display: none !important; }
+
+.modal-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;
+    background-color: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex; justify-content: center; align-items: center;
+    opacity: 0; animation: fadeInOverlay 0.3s forwards;
+}
+@keyframes fadeInOverlay { to { opacity: 1; } }
+
+.modal-window {
+    aspect-ratio: 4 / 3; width: 75%; max-height: 90%; max-width: 1200px;
+    background-color: #2c2f36; color: #e0e0e0;
+    border-radius: calc(1 * var(--unit));
+    box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+    position: relative; display: flex; flex-direction: column; overflow: hidden;
+    transform: scale(0.95); animation: popInModal 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+@keyframes popInModal { to { transform: scale(1); } }
+
+.modal-close-btn {
+    position: absolute; top: calc(0.8 * var(--unit)); right: calc(0.8 * var(--unit));
+    background: rgba(255,255,255,0.05); border: none; font-size: 1.5cqw; color: #888;
+    cursor: pointer; z-index: 10; width: calc(2.5 * var(--unit)); height: calc(2.5 * var(--unit));
+    border-radius: 50%; display: flex; justify-content: center; align-items: center;
+    font-family: monospace; transition: all 0.2s;
+}
+.modal-close-btn:hover { background-color: rgba(255,255,255,0.15); color: #fff; }
+
+.modal-content-area { flex: 1; width: 100%; height: 100%; overflow-y: auto; position: relative; }

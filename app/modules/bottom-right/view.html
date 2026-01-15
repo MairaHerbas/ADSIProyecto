@@ -1,0 +1,96 @@
+<div class="module-box module-br">
+    <div class="br-toggle-container main-toggle" id="br-main-toggle-group">
+        <button class="br-toggle-btn active" data-target="friends">AMISTADES</button>
+        <button class="br-toggle-btn" data-target="notifications">NOTIFICACIONES</button>
+        <button class="br-toggle-btn" data-target="admin" id="btn-tab-admin" style="display:none;">ADMIN</button>
+        <div id="br-glider-main" class="br-glider"></div>
+    </div>
+
+    <div class="br-content-area">
+        
+        <div id="br-panel-friends" class="br-panel">
+            <div class="br-subtoggle-container">
+                <button class="br-subtoggle-btn active" data-subtarget="sub-list">AMIGOS</button>
+                <button class="br-subtoggle-btn" data-subtarget="sub-pending">PENDIENTES</button>
+                <button class="br-subtoggle-btn" data-subtarget="sub-add">AÑADIR</button>
+                <div id="br-glider-sub" class="br-subglider"></div>
+            </div>
+            <div class="br-subcontent-wrapper">
+                <div id="sub-list" class="br-subpage active">
+                    <div class="search-container">
+                        <input type="text" id="friends-search-input" class="std-search-input" placeholder="Buscar amigo..." autocomplete="off">
+                    </div>
+                    <div class="br-list-container search-results-area">
+                        <div class="scroll-mask mask-top"></div><div class="scroll-mask mask-bottom"></div>
+                        <ul id="list-friends-ul" class="br-scroll-list"></ul>
+                    </div>
+                </div>
+                <div id="sub-pending" class="br-subpage">
+                    <div class="search-container">
+                        <input type="text" id="pending-search-input" class="std-search-input" placeholder="Buscar solicitud..." autocomplete="off">
+                    </div>
+                    <div class="br-list-container search-results-area">
+                        <div class="scroll-mask mask-top"></div><div class="scroll-mask mask-bottom"></div>
+                        <ul id="list-pending-ul" class="br-scroll-list"></ul>
+                    </div>
+                </div>
+                <div id="sub-add" class="br-subpage">
+                    <div class="search-container">
+                        <input type="text" id="user-search-input" class="std-search-input" placeholder="Buscar usuario..." autocomplete="off">
+                    </div>
+                    <div class="br-list-container search-results-area">
+                        <div class="scroll-mask mask-top"></div><div class="scroll-mask mask-bottom"></div>
+                        <ul id="list-add-ul" class="br-scroll-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="br-panel-notifications" class="br-panel" style="display: none;">
+            <div class="notif-layout">
+                <div class="notif-toolbar">
+                    <div class="filter-btn" id="filter-user-btn"><span class="btn-text">USUARIO</span><div class="dropdown-menu" id="dd-user"></div></div>
+                    <div class="filter-btn" id="filter-date-btn"><span class="btn-text">FECHA</span><div class="dropdown-menu" id="dd-date"></div></div>
+                    <div class="filter-btn" id="filter-type-btn"><span class="btn-text">TIPO</span><div class="dropdown-menu" id="dd-type"></div></div>
+                    <div class="refresh-btn" id="btn-refresh-notifs"><div class="btn-icon-mask icon-refresh"></div></div>
+                </div>
+                <div class="notif-list-area">
+                    <div class="br-list-container">
+                        <div class="scroll-mask mask-top"></div><div class="scroll-mask mask-bottom"></div>
+                        <ul id="list-notifs-ul" class="br-scroll-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="br-panel-admin" class="br-panel" style="display: none;">
+            <div class="br-subtoggle-container">
+                <button class="br-subtoggle-btn active" data-subtarget="sub-admin-users">USUARIOS</button>
+                <button class="br-subtoggle-btn" data-subtarget="sub-admin-pending">PENDIENTES</button>
+                <div id="br-glider-sub-admin" class="br-subglider" style="width: 50%;"></div>
+            </div>
+
+            <div class="br-subcontent-wrapper">
+                <div id="sub-admin-users" class="br-subpage active">
+                    <div class="search-container">
+                        <input type="text" id="admin-user-search-input" class="std-search-input" placeholder="Buscar usuario..." autocomplete="off">
+                    </div>
+                    <div class="br-list-container search-results-area">
+                        <div class="scroll-mask mask-top"></div><div class="scroll-mask mask-bottom"></div>
+                        <ul id="list-admin-users-ul" class="br-scroll-list"></ul>
+                    </div>
+                </div>
+                <div id="sub-admin-pending" class="br-subpage">
+                    <div class="search-container">
+                        <input type="text" id="admin-pending-search-input" class="std-search-input" placeholder="Buscar pendiente..." autocomplete="off">
+                    </div>
+                    <div class="br-list-container search-results-area">
+                        <div class="scroll-mask mask-top"></div><div class="scroll-mask mask-bottom"></div>
+                        <ul id="list-admin-pending-ul" class="br-scroll-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
