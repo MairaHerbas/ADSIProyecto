@@ -1,75 +1,76 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, request, jsonify, session
 from app.controller.model.user_model import User
-from app.database.connection import db
-from app.utils import login_required
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route("/", methods=["GET", "POST"])
-def home():
-    if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
-        user = User.query.filter_by(email=email).first()
 
-        if not user or not user.check_password(password):
-            flash("Credenciales incorrectas.", "danger")
-            return render_template("miguel-adrian/welcome_login.html")
+# --- API LOGIN ---
+@auth_bp.route('/api/login', methods=['POST'])
+def login():
+    # 1. Recibir datos del usuario
+    data = request.json
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
 
-        if user.status == 'activo':
-            session["user_id"] = user.id
-            session["user_name"] = user.name
-            session["role"] = user.role
-            flash(f"Hola {user.name}", "success")
-            return redirect(url_for("main.dashboard"))
-        else:
-            flash('Cuenta pendiente.', 'warning')
-            return render_template("miguel-adrian/welcome_login.html")
+    # 2. Buscar usuario (Lógica original adaptada)
+    user = User.get_by_email(email)
 
-    return render_template("miguel-adrian/index.html")
+    if not user or not user.check_password(password):
+        return jsonify({"success": False, "error": "Credenciales incorrectas"}), 401
 
-@auth_bp.route("/register", methods=["GET", "POST"])
+    if user.status != 'activo':
+        # Replica la lógica de 'pendiente' del auth.py original
+        return jsonify({"success": False, "error": "Tu cuenta está pendiente de aprobación"}), 403
+
+    # 3. Guardar en sesión
+    session['user_id'] = user.id
+    session['user_name'] = user.name
+    session['role'] = user.role
+
+    return jsonify({"success": True, "msg": f"Bienvenido {user.name}", "redirect": "/"})
+
+
+# --- API REGISTRO ---
+@auth_bp.route('/api/register', methods=['POST'])
 def register():
-    def register():
-        if request.method == "POST":
-            name = (request.form.get("name") or "").strip()
-            username = (request.form.get("username") or "").strip().lower()
-            email = (request.form.get("email") or "").strip().lower()
-            password = request.form.get("password") or ""
-            confirm = request.form.get("confirm") or ""
+    data = request.json
+    name = data.get('name', '').strip()
+    username = data.get('username', '').strip().lower()
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
+    confirm = data.get('confirm', '')  # Si el frontend envía confirmación
 
-            if not name or not username or not email or not password or not confirm:
-                flash("Rellena todos los campos.", "warning")
-                return render_template("register.html")
-            if "@" not in email or "." not in email:
-                flash("Por favor, introduce un correo electrónico válido.", "warning")
-                return render_template("register.html")
-            if password != confirm:
-                flash("Las contraseñas no coinciden.", "warning")
-                return render_template("register.html")
-            if len(password) < 6:
-                flash("La contraseña debe tener al menos 6 caracteres.", "warning")
-                return render_template("register.html")
-            if User.query.filter_by(username=username).first():
-                flash("Ese nombre de usuario ya está en uso. Elige otro.", "warning")
-                return render_template("register.html")
-            if User.query.filter_by(email=email).first():
-                flash("Ya existe una cuenta con ese email.", "warning")
-                return render_template("register.html")
+    # 1. Validaciones (Copiadas del auth.py original)
+    if not name or not username or not email or not password:
+        return jsonify({"success": False, "error": "Rellena todos los campos"}), 400
 
-            new_user = User(name=name, username=username, email=email, role="user")
-            new_user.set_password(password)
-            db.session.add(new_user)
-            db.session.commit()
+    if "@" not in email or "." not in email:
+        return jsonify({"success": False, "error": "Email inválido"}), 400
 
-            flash("¡Cuenta creada! Está pendiente de aprobación por un administrador.", "info")
-            return redirect(url_for("auth.home"))
+    if confirm and password != confirm:
+        return jsonify({"success": False, "error": "Las contraseñas no coinciden"}), 400
 
-        return render_template("register.html")
+    if len(password) < 6:
+        return jsonify({"success": False, "error": "La contraseña debe tener al menos 6 caracteres"}), 400
+
+    # 2. Verificar duplicados en DB
+    if User.get_by_username(username):
+        return jsonify({"success": False, "error": "El nombre de usuario ya está en uso"}), 400
+
+    if User.get_by_email(email):
+        return jsonify({"success": False, "error": "El email ya está registrado"}), 400
+
+    # 3. Crear usuario
+    try:
+        User.create(name, username, email, password)
+        # Nota: El mensaje original decía "Pendiente de aprobación", pero aquí devolvemos éxito directo
+        return jsonify({"success": True, "msg": "Cuenta creada correctamente. ¡Inicia sesión!"})
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error interno: {str(e)}"}), 500
 
 
-@auth_bp.route("/logout")
-@login_required
+# --- API LOGOUT ---
+@auth_bp.route('/api/logout', methods=['POST', 'GET'])
 def logout():
     session.clear()
-    return redirect(url_for("auth.home"))
+    return jsonify({"success": True, "redirect": "/"})

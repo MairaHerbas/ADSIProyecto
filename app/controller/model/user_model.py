@@ -1,69 +1,142 @@
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import event
-from sqlalchemy.engine import Engine
 from app.database.connection import db
 
 
-# Activar Foreign Keys en SQLite
-@event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+# --- CLASE USER ---
+class User:
+    def __init__(self, id, name, username, email, password_hash, role, status, created_at):
+        self.id = id
+        self.name = name
+        self.username = username
+        self.email = email
+        self.password_hash = password_hash
+        self.role = role
+        self.status = status
+        self.created_at = created_at
 
-# Tabla intermedia Amistades
-friendship = db.Table('friendship',
-                      db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-                      db.Column('friend_id', db.Integer, db.ForeignKey('user.id'), primary_key=True)
-                      )
+    # --- SQL: Búsquedas ---
+    @staticmethod
+    def get_by_email(email):
+        row = db.select("SELECT * FROM user WHERE email = ?", (email,))
+        return User(**dict(row[0])) if row else None
 
-class User(db.Model):
-    __tablename__ = 'user'
+    @staticmethod
+    def get_by_id(user_id):
+        row = db.select("SELECT * FROM user WHERE id = ?", (user_id,))
+        return User(**dict(row[0])) if row else None
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
-    username = db.Column(db.String(80), unique=True, nullable=False, index=True)
-    email = db.Column(db.String(255), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default="user")
-    status = db.Column(db.String(20), nullable=False, default='pendiente')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    @staticmethod
+    def get_by_username(username):
+        row = db.select("SELECT * FROM user WHERE username = ?", (username,))
+        return User(**dict(row[0])) if row else None
 
-    # Relaciones Sociales (Repo 2)
-    friends = db.relationship('User',
-                              secondary=friendship,
-                              primaryjoin=(friendship.c.user_id == id),
-                              secondaryjoin=(friendship.c.friend_id == id),
-                              backref=db.backref('friend_of', lazy='dynamic'),
-                              lazy='dynamic')
+    @staticmethod
+    def get_all_excluding(user_id):
+        rows = db.select("SELECT * FROM user WHERE id != ?", (user_id,))
+        return [User(**dict(r)) for r in rows]
 
-    # INTEGRACIÓN REPO 1: Tus equipos
-    equipos = db.relationship('Equipo', back_populates='user', lazy=True, cascade="all, delete-orphan")
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+    # --- SQL: Creación ---
+    @staticmethod
+    def create(name, username, email, password):
+        hashed_pw = generate_password_hash(password)
+        created_at = datetime.utcnow()
+        # Estado 'activo' por defecto para pruebas
+        sql = """
+            INSERT INTO user (name, username, email, password_hash, role, status, created_at)
+            VALUES (?, ?, ?, ?, 'user', 'activo', ?)
+        """
+        return db.insert(sql, (name, username, email, hashed_pw, created_at))
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    # --- Propiedades de Relación ---
+    @property
+    def friends(self):
+        sql = """
+            SELECT u.* FROM user u
+            JOIN friendship f ON (u.id = f.friend_id OR u.id = f.user_id)
+            WHERE (f.user_id = ? OR f.friend_id = ?) AND u.id != ?
+        """
+        rows = db.select(sql, (self.id, self.id, self.id))
+        return [User(**dict(r)) for r in rows]
 
-class FriendRequest(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    status = db.Column(db.String(20), default='pending')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    @property
+    def equipos(self):
+        # Importación local para evitar ciclos
+        from app.controller.model.pokemon_model import Equipo
+        return Equipo.get_by_user(self.id)
 
-    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_requests')
-    receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_requests')
 
-class Event(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    event_type = db.Column(db.String(50), nullable=False)  # "CREACION_EQUIPO", etc.
-    description = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+# --- CLASE EVENT (Esta es la que te faltaba) ---
+class Event:
+    @staticmethod
+    def create(user_id, event_type, description):
+        created_at = datetime.utcnow()
+        sql = "INSERT INTO event (user_id, event_type, description, created_at) VALUES (?, ?, ?, ?)"
+        db.insert(sql, (user_id, event_type, description, created_at))
 
-    # Esta relación es necesaria para el dashboard (Changelog)
-    # user = db.relationship... (ya debería estar definida en User como backref)
+
+# --- CLASE FRIEND REQUEST ---
+class FriendRequest:
+    def __init__(self, id, sender_id, receiver_id, status, created_at, sender_name=None):
+        self.id = id
+        self.sender_id = sender_id
+        self.receiver_id = receiver_id
+        self.status = status
+        self.created_at = created_at
+        self.sender_name = sender_name
+
+    @staticmethod
+    def create(sender_id, receiver_id):
+        created_at = datetime.utcnow()
+        sql = "INSERT INTO friend_request (sender_id, receiver_id, status, created_at) VALUES (?, ?, 'pending', ?)"
+        db.insert(sql, (sender_id, receiver_id, created_at))
+
+    @staticmethod
+    def get_existing(sender_id, receiver_id):
+        sql = """
+            SELECT * FROM friend_request 
+            WHERE ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?))
+            AND status = 'pending'
+        """
+        rows = db.select(sql, (sender_id, receiver_id, receiver_id, sender_id))
+        return rows[0] if rows else None
+
+    @staticmethod
+    def get_received_pending(user_id):
+        sql = """
+            SELECT fr.*, u.username as sender_name 
+            FROM friend_request fr
+            JOIN user u ON fr.sender_id = u.id
+            WHERE fr.receiver_id = ? AND fr.status = 'pending'
+        """
+        rows = db.select(sql, (user_id,))
+        requests = []
+        for r in rows:
+            d = dict(r)
+            requests.append(FriendRequest(d['id'], d['sender_id'], d['receiver_id'], d['status'], d['created_at'],
+                                          d['sender_name']))
+        return requests
+
+    @staticmethod
+    def accept(request_id):
+        db.update("UPDATE friend_request SET status = 'accepted' WHERE id = ?", (request_id,))
+        rows = db.select("SELECT sender_id, receiver_id FROM friend_request WHERE id = ?", (request_id,))
+        if rows:
+            req = dict(rows[0])
+            db.insert("INSERT INTO friendship (user_id, friend_id) VALUES (?, ?)",
+                      (req['sender_id'], req['receiver_id']))
+
+    @staticmethod
+    def reject(request_id):
+        db.delete("DELETE FROM friend_request WHERE id = ?", (request_id,))
+
+    @staticmethod
+    def remove_friend(user_id, friend_id):
+        sql = """
+            DELETE FROM friendship 
+            WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
+        """
+        db.delete(sql, (user_id, friend_id, friend_id, user_id))

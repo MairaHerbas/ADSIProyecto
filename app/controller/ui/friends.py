@@ -1,127 +1,99 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, session, abort
-from app.controller.model.user_model import User, FriendRequest, friendship
-from app.extensions import db
+from flask import Blueprint, request, jsonify, session
+from app.controller.model.user_model import User, FriendRequest
 from app.utils import login_required, get_current_user
 
-friends_bp = Blueprint('friends', __name__, url_prefix='/amistades')
+friends_bp = Blueprint('friends', __name__)
 
 
-@friends_bp.route("/")
+@friends_bp.route('/api/friends/data')
 @login_required
-def gestionar_amistades():
-    return render_template("amistades.html")
+def get_friends_data():
+    me = get_current_user()
+    if not me: return jsonify({"error": "No user"}), 401
+
+    # Obtener amigos y solicitudes usando los métodos SQL
+    amigos_list = [u.username for u in me.friends]
+
+    pending_reqs = FriendRequest.get_received_pending(me.id)
+    pendientes_list = [req.sender_name for req in pending_reqs]
+
+    return jsonify({
+        "friends": amigos_list,
+        "pending": pendientes_list
+    })
 
 
-@friends_bp.route("/buscar", methods=["GET", "POST"])
+@friends_bp.route('/api/friends/request', methods=['POST'])
 @login_required
-def buscar_amigos():
-    resultado_busqueda = None
-    query = None
+def request_friend():
+    data = request.json
+    target_username = data.get('name')
+    me = get_current_user()
 
-    if request.method == "POST":
-        query = request.form.get("username_busqueda", "").strip().lower()
-        if not query:
-            flash("Por favor, introduce un nombre de usuario para buscar.", "warning")
-            return redirect(url_for('friends.buscar_amigos'))
+    target = User.get_by_username(target_username)
+    if not target:
+        return jsonify({"status": "error", "msg": "Usuario no encontrado"}), 404
 
-        resultado_busqueda = User.query.filter_by(username=query).first()
-        if resultado_busqueda and resultado_busqueda.id == session['user_id']:
-            flash("No puedes enviarte una solicitud a ti mismo.", "warning")
-            resultado_busqueda = None
+    if target.id == me.id:
+        return jsonify({"status": "error", "msg": "No puedes enviarte solicitud a ti mismo"})
 
-    return render_template("buscar_amigos.html", resultado=resultado_busqueda, query=query)
+    # Verificar si ya son amigos
+    if any(f.id == target.id for f in me.friends):
+        return jsonify({"status": "error", "msg": "Ya sois amigos"})
+
+    # Verificar si ya hay solicitud pendiente
+    if FriendRequest.get_existing(me.id, target.id):
+        return jsonify({"status": "error", "msg": "Ya hay una solicitud pendiente"})
+
+    FriendRequest.create(me.id, target.id)
+    return jsonify({"status": "success", "msg": f"Solicitud enviada a {target_username}"})
 
 
-@friends_bp.post("/enviar/<int:user_id>")
+@friends_bp.route('/api/friends/accept', methods=['POST'])
 @login_required
-def enviar_solicitud(user_id):
-    receiver = User.query.get_or_404(user_id)
-    sender = get_current_user()
+def accept_friend():
+    data = request.json
+    sender_name = data.get('name')
+    me = get_current_user()
 
-    if receiver.id == sender.id:
-        flash("No puedes enviarte una solicitud a ti mismo.", "warning")
-        return redirect(url_for('friends.buscar_amigos'))
+    # Buscar la solicitud por nombre del remitente
+    pending = FriendRequest.get_received_pending(me.id)
+    req_to_accept = next((r for r in pending if r.sender_name == sender_name), None)
 
-    if sender.friends.filter(friendship.c.friend_id == receiver.id).count() > 0:
-        flash(f"Ya eres amigo de {receiver.username}.", "info")
-        return redirect(url_for('friends.buscar_amigos'))
+    if req_to_accept:
+        FriendRequest.accept(req_to_accept.id)
+        return jsonify({"status": "success", "msg": f"{sender_name} aceptado"})
 
-    existing_request = FriendRequest.query.filter(
-        ((FriendRequest.sender_id == sender.id) & (FriendRequest.receiver_id == receiver.id)) |
-        ((FriendRequest.sender_id == receiver.id) & (FriendRequest.receiver_id == sender.id))
-    ).filter(FriendRequest.status == 'pending').first()
-
-    if existing_request:
-        flash("Ya hay una solicitud de amistad pendiente con este usuario.", "warning")
-        return redirect(url_for('friends.buscar_amigos'))
-
-    new_request = FriendRequest(sender_id=sender.id, receiver_id=receiver.id)
-    db.session.add(new_request)
-    db.session.commit()
-
-    flash(f"¡Solicitud de amistad enviada a {receiver.username}!", "success")
-    return redirect(url_for('friends.buscar_amigos'))
+    return jsonify({"status": "error", "msg": "Solicitud no encontrada"}), 404
 
 
-@friends_bp.route("/solicitudes")
+@friends_bp.route('/api/friends/reject', methods=['POST'])
 @login_required
-def ver_solicitudes():
-    current_user_id = session['user_id']
-    solicitudes = FriendRequest.query.filter_by(
-        receiver_id=current_user_id, status='pending'
-    ).order_by(FriendRequest.created_at.desc()).all()
-    return render_template("solicitudes_recibidas.html", solicitudes=solicitudes)
+def reject_friend():
+    data = request.json
+    sender_name = data.get('name')
+    me = get_current_user()
+
+    pending = FriendRequest.get_received_pending(me.id)
+    req_to_reject = next((r for r in pending if r.sender_name == sender_name), None)
+
+    if req_to_reject:
+        FriendRequest.reject(req_to_reject.id)
+        return jsonify({"status": "success", "msg": "Solicitud rechazada"})
+
+    return jsonify({"status": "error", "msg": "Solicitud no encontrada"}), 404
 
 
-@friends_bp.post("/aceptar/<int:request_id>")
+@friends_bp.route('/api/friends/remove', methods=['POST'])
 @login_required
-def aceptar_solicitud(request_id):
-    solicitud = FriendRequest.query.get_or_404(request_id)
-    if solicitud.receiver_id != session['user_id']:
-        abort(403)
+def remove_friend():
+    data = request.json
+    friend_name = data.get('name')
+    me = get_current_user()
 
-    solicitud.status = 'accepted'
-    usuario_actual = get_current_user()
-    nuevo_amigo = solicitud.sender
+    friend = User.get_by_username(friend_name)
+    if friend:
+        FriendRequest.remove_friend(me.id, friend.id)
+        return jsonify({"status": "success", "msg": "Amigo eliminado"})
 
-    usuario_actual.friends.append(nuevo_amigo)
-    nuevo_amigo.friends.append(usuario_actual)
-    db.session.commit()
-
-    flash(f"¡Ahora eres amigo de {nuevo_amigo.username}!", "success")
-    return redirect(url_for('friends.ver_solicitudes'))
-
-
-@friends_bp.post("/rechazar/<int:request_id>")
-@login_required
-def rechazar_solicitud(request_id):
-    solicitud = FriendRequest.query.get_or_404(request_id)
-    if solicitud.receiver_id != session['user_id']:
-        abort(403)
-
-    db.session.delete(solicitud)
-    db.session.commit()
-    flash(f"Solicitud de {solicitud.sender.username} rechazada.", "info")
-    return redirect(url_for('friends.ver_solicitudes'))
-
-
-@friends_bp.route("/lista")
-@login_required
-def ver_amigos():
-    current_user = get_current_user()
-    lista_amigos = current_user.friends.order_by(User.username).all()
-    return render_template("ver_amigos.html", lista_amigos=lista_amigos)
-
-
-@friends_bp.post("/eliminar/<int:friend_id>")
-@login_required
-def eliminar_amigo(friend_id):
-    current_user = get_current_user()
-    friend_to_remove = User.query.get_or_404(friend_id)
-
-    current_user.friends.remove(friend_to_remove)
-    friend_to_remove.friends.remove(current_user)
-    db.session.commit()
-
-    flash(f"Has eliminado a {friend_to_remove.username} de tu lista de amigos.", "info")
-    return redirect(url_for('friends.ver_amigos'))
+    return jsonify({"status": "error", "msg": "Usuario no encontrado"}), 404

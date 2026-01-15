@@ -1,52 +1,80 @@
 from datetime import datetime
 from app.database.connection import db
 
+class Pokemon:
+    @staticmethod
+    def get_all():
+        """Obtiene todos los pokemons para la caja (disponibles)"""
+        sql = "SELECT * FROM pokemons"
+        return db.select(sql)
 
-class Pokemon(db.Model):
-    __tablename__ = 'pokemons'
+class Equipo:
+    def __init__(self, id, user_id, nombre_equipo, created_at):
+        self.id = id
+        self.user_id = user_id
+        self.nombre_equipo = nombre_equipo
+        self.created_at = created_at
 
-    # --- LAS 13 COLUMNAS EXACTAS QUE USA TU CARGADOR ---
-    id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(50), nullable=False)
-    imagen_url = db.Column(db.String(255))  # Ojo: asegúrate de llamarlo igual que en tu script loader
-    generacion = db.Column(db.Integer)
-    altura = db.Column(db.Float)
-    peso = db.Column(db.Float)
-    tipos = db.Column(db.String(255))
-    habilidades = db.Column(db.String(255))
-    movimientos = db.Column(db.String(255))
-    hp = db.Column(db.Integer)
-    ataque = db.Column(db.Integer)
-    defensa = db.Column(db.Integer)
-    velocidad = db.Column(db.Integer)
+    @staticmethod
+    def get_by_user(user_id):
+        # Nodo 4.1 del Diagrama de Consulta
+        sql = "SELECT * FROM equipo WHERE user_id = ? ORDER BY created_at DESC"
+        rows = db.select(sql, (user_id,))
+        return [dict(row) for row in rows] # Convertimos Row a dict
 
-    def __repr__(self):
-        return f'<Pokemon {self.nombre}>'
+    @staticmethod
+    def get_by_id(equipo_id):
+        # Nodo 4.1 del Diagrama de Edición
+        sql = "SELECT * FROM equipo WHERE id = ?"
+        rows = db.select(sql, (equipo_id,))
+        if rows:
+            return dict(rows[0])
+        return None
 
+    @staticmethod
+    def create(user_id, nombre):
+        # Nodo 3.1.1 del Diagrama de Creación
+        sql = "INSERT INTO equipo (user_id, nombre_equipo, created_at) VALUES (?, ?, ?)"
+        # Retorna el ID generado (Nodo 3.1.4)
+        return db.insert(sql, (user_id, nombre, datetime.utcnow()))
 
-class Equipo(db.Model):
-    __tablename__ = 'equipo'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    nombre_equipo = db.Column(db.String(30), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    @staticmethod
+    def update(equipo_id, nombre):
+        # Nodo 5.1.1 del Diagrama de Edición
+        sql = "UPDATE equipo SET nombre_equipo = ? WHERE id = ?"
+        db.update(sql, (nombre, equipo_id))
 
-    user = db.relationship('User', back_populates='equipos')
-    pokemons = db.relationship('PokemonEquipo', back_populates='equipo', cascade="all, delete-orphan")
+    @staticmethod
+    def delete(equipo_id):
+        # SQL con borrado en cascada manual (si SQLite no lo tiene activo)
+        db.delete("DELETE FROM pokemon_equipo WHERE equipo_id = ?", (equipo_id,))
+        db.delete("DELETE FROM equipo WHERE id = ?", (equipo_id,))
 
+    @staticmethod
+    def get_members(equipo_id):
+        # Obtiene los miembros completos haciendo JOIN con la tabla pokemons
+        sql = """
+            SELECT pe.*, p.nombre, p.tipos, p.imagen_url 
+            FROM pokemon_equipo pe
+            JOIN pokemons p ON pe.pokemon_id = p.id
+            WHERE pe.equipo_id = ?
+            ORDER BY pe.orden ASC
+        """
+        rows = db.select(sql, (equipo_id,))
+        return [dict(row) for row in rows]
 
-class PokemonEquipo(db.Model):
-    __tablename__ = 'pokemon_equipo'
-    id = db.Column(db.Integer, primary_key=True)
-    equipo_id = db.Column(db.Integer, db.ForeignKey('equipo.id', ondelete='CASCADE'), nullable=False)
-    pokemon_id = db.Column(db.Integer, db.ForeignKey('pokemons.id'), nullable=False)
+class PokemonEquipo:
+    @staticmethod
+    def create(equipo_id, pokemon_id, orden):
+        # Nodo 5.1.3 del Diagrama de Edición
+        sql = """
+            INSERT INTO pokemon_equipo (equipo_id, pokemon_id, orden, fecha_captura) 
+            VALUES (?, ?, ?, ?)
+        """
+        db.insert(sql, (equipo_id, pokemon_id, orden, datetime.utcnow()))
 
-    # Datos extra exigidos por tus diagramas
-    orden = db.Column(db.Integer, nullable=False)
-    apodo = db.Column(db.String(50), nullable=True)
-    habilidad = db.Column(db.String(50), nullable=True)
-    movimiento = db.Column(db.String(50), nullable=True)
-    fecha_captura = db.Column(db.DateTime, default=datetime.utcnow)
-
-    equipo = db.relationship('Equipo', back_populates='pokemons')
-    pokemon = db.relationship('Pokemon')
+    @staticmethod
+    def delete_by_equipo(equipo_id):
+        # Nodo 5.1.2 del Diagrama de Edición
+        sql = "DELETE FROM pokemon_equipo WHERE equipo_id = ?"
+        db.delete(sql, (equipo_id,))

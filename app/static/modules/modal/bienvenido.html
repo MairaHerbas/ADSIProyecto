@@ -1,0 +1,43 @@
+<div class="modal-content auth-container">
+    <span class="close-modal">&times;</span>
+
+    <div id="login-section">
+        <h2>Bienvenido Entrenador</h2>
+        <form id="form-login">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="login-email" required placeholder="ash@pokedex.com">
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="login-password" required>
+            </div>
+            <button type="submit" class="btn-primary">Iniciar Sesión</button>
+        </form>
+        <p class="switch-msg">¿No tienes cuenta? <a href="#" id="btn-go-register">Regístrate aquí</a></p>
+    </div>
+
+    <div id="register-section" style="display: none;">
+        <h2>Crear Licencia</h2>
+        <form id="form-register">
+            <div class="form-group">
+                <label>Nombre Entrenador</label>
+                <input type="text" id="reg-name" required placeholder="Ash Ketchum">
+            </div>
+            <div class="form-group">
+                <label>Usuario (Nick)</label>
+                <input type="text" id="reg-username" required placeholder="ash123">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="reg-email" required>
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="reg-password" required>
+            </div>
+            <button type="submit" class="btn-success">Registrarse</button>
+        </form>
+        <p class="switch-msg">¿Ya tienes cuenta? <a href="#" id="btn-go-login">Inicia Sesión</a></p>
+    </div>
+</div>

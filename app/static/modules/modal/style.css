@@ -1,0 +1,68 @@
+@import url('css/base.css');
+@import url('css/profile.css');
+@import url('css/team.css');
+
+/* Posicionamiento del Modal (Fondo oscuro) */
+#wrapper-modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85); /* Un poco más oscuro */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Caja blanca del formulario */
+.modal-content.auth-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px; /* Coincide con tu .card de index_am.css */
+    width: 400px;
+    max-width: 90%;
+    position: relative;
+    /* Sombra suave como en tu welcome-header */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Botón de cerrar (X) */
+.close-modal {
+    position: absolute;
+    top: 15px; right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.2s;
+}
+.close-modal:hover { color: #cc0000; }
+
+/* Ajustes de formulario */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px; /* Bordes redondeados acorde a tus botones */
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.switch-msg {
+    text-align: center;
+    margin: 15px 0 10px;
+    color: #666;
+}
+
+/* NOTA: Los estilos de .btn-full, .btn-primary y .btn-secondary
+   se cargan automáticamente desde index.css, no los repetimos aquí. */
