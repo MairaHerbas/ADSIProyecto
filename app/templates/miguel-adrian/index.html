@@ -1,12 +1,24 @@
-{% extends "base.html" %}
-{% block title %}Inicio – Pokedex{% endblock %}
-{% block content %}
-<div class="card">
-  {% if me %}
-    <p>Hola, <strong>{{ me.display_name }}</strong> ({{ me.email }})</p>
-    <p class="muted">Ve a tu <a href="{{ url_for('profile') }}">perfil</a> para editar datos o gestionar seguidores.</p>
-  {% else %}
-    <p>Bienvenido. Inicia sesión o regístrate para empezar.</p>
-  {% endif %}
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema Modular 16:9</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/shell.css">
+</head>
+<body>
+
+    <main id="main-container">
+        <div class="row-top">
+            <div id="wrapper-tl"></div> <div id="wrapper-tr"></div> </div>
+
+        <div class="row-bottom">
+            <div id="wrapper-bl"></div> <div id="wrapper-br"></div> </div>
+            
+        </main>
+
+    <div id="wrapper-modal"></div>
+
+    <script src="js/loader.js"></script>
+</body>
+</html>
