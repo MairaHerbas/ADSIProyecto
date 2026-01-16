@@ -8,8 +8,6 @@ from app.controller.ui.pokemon_controller import pokemon_bp
 from app.controller.ui.friends import friends_bp
 from app.controller.ui.main import main_bp
 from app.controller.ui.admin import admin_bp
-
-# IMPORTAR EL NUEVO BLUEPRINT (Asegúrate de que la ruta coincida con donde guardaste el archivo 5)
 from app.controller.ui.routes_changelog import changelog_bp
 
 # Importar Loader
@@ -26,8 +24,6 @@ def create_app():
     app.register_blueprint(friends_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(admin_bp)
-    
-    # Registrar el Blueprint de Changelog
     app.register_blueprint(changelog_bp)
 
     @app.route('/')
@@ -35,14 +31,14 @@ def create_app():
         return render_template('index.html')
 
     with app.app_context():
-        # 1. Crear Tablas del Sistema (Usuarios, Amigos, y AHORA Changelog)
-        init_tables()
-
-        # 2. Cargar Pokemons si es necesario
+        # 1. PRIMERO: Cargar Pokemons (Crea la tabla 'pokemons' y descarga datos si hace falta)
+        # Es importante hacerlo antes de init_tables para que la tabla 'pokemons' exista
+        # cuando 'pokemon_equipo' intente referenciarla.
         loader = PokemonLoader()
-        loader.inicializar_db()
-        if loader.db_esta_vacia():
-            loader.descargar_datos()
+        loader.descargar_datos()  # <--- ESTA ES LA ÚNICA LLAMADA NECESARIA
+
+        # 2. SEGUNDO: Crear resto de tablas del Sistema
+        init_tables()
 
     return app
 
@@ -76,6 +72,7 @@ def init_tables():
     """)
 
     # Tabla POKEMON_EQUIPO
+    # Nota: Esta tabla referencia a 'pokemons', por eso cargamos el loader antes.
     db.insert("""
     CREATE TABLE IF NOT EXISTS pokemon_equipo (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -115,7 +112,7 @@ def init_tables():
     );
     """)
 
-    # --- NUEVA TABLA: CHANGELOG_EVENT ---
+    # Tabla CHANGELOG_EVENT
     db.insert("""
     CREATE TABLE IF NOT EXISTS Changelog_Event (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -1,139 +1,107 @@
-# En app/services/pokemon_loader.py
-import os
-import sqlite3
 import requests
+from app.controller.model.pokemon_db_controller import PokemonDBController
 
-# Ajuste de ruta: subir 3 niveles (services -> app -> root)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DB_PATH = os.path.join(BASE_DIR, "instance", "pokedex.db")
 
 class PokemonLoader:
-    # ... (EL RESTO DE TU CÓDIGO PERMANECE IGUAL) ...
-    # Asegúrate de que tu métodOo _conectar use os.makedirs para crear la carpeta instance si no existe
     def __init__(self):
-        self.api_url = "https://pokeapi.co/api/v2/pokemon/"
+        self.db_controller = PokemonDBController()
+        # Límite de la API (Actualmente hay 1025 pokemons + formas)
+        self.TOTAL_POKEMONS_OBJETIVO = 1025
+        self.api_url = f"https://pokeapi.co/api/v2/pokemon?limit={self.TOTAL_POKEMONS_OBJETIVO}&offset=0"
 
-    def _conectar(self):
-        directorio = os.path.dirname(DB_PATH)
+    def descargar_datos(self):
+        """
+        Lógica Inteligente:
+        1. Asegura que la tabla existe.
+        2. Cuenta cuántos tenemos.
+        3. Si tenemos los 1025 -> NO HACE NADA (Arranque rápido).
+        4. Si faltan -> BORRA TODO y descarga de cero (Para evitar duplicados o errores).
+        """
+        # Paso 1: Asegurar estructura (sin borrar nada aun)
+        self.db_controller.crear_tabla()
 
+        # Paso 2: Contar
+        cantidad_actual = self.db_controller.contar_registros()
+        print(f"--- Verificando Base de Datos: Hay {cantidad_actual} / {self.TOTAL_POKEMONS_OBJETIVO} Pokémon ---")
 
-        if directorio and not os.path.exists(directorio):
-            try:
-                os.makedirs(directorio)
-                print(f"Directorio creado: {directorio}")
-            except OSError as e:
-                print(f"Error al crear el directorio: {e}")
-                raise
-
-
-
-        conn = sqlite3.connect(DB_PATH)
-        return conn
-
-    def inicializar_db(self):
-        conn = self._conectar()
-        cursor = conn.cursor()
-        # IMPORTANTE: Definimos las 13 columnas exactas que luego insertamos
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS pokemons (
-                id INTEGER PRIMARY KEY,
-                nombre TEXT NOT NULL,
-                imagen_url TEXT,
-                generacion INTEGER,
-                altura REAL,
-                peso REAL,
-                tipos TEXT,
-                habilidades TEXT,
-                movimientos TEXT,
-                hp INTEGER,
-                ataque INTEGER,
-                defensa INTEGER,
-                velocidad INTEGER
-            )
-        ''')
-        conn.commit()
-        conn.close()
-
-    def db_esta_vacia(self):
-        conn = self._conectar()
-        cursor = conn.cursor()
-        try:
-            cursor.execute("SELECT COUNT(*) FROM pokemons")
-            cantidad = cursor.fetchone()[0]
-        except sqlite3.OperationalError:
+        if cantidad_actual >= self.TOTAL_POKEMONS_OBJETIVO:
+            print("✅ La Base de Datos ya está completa. Omitiendo descarga.")
             return True
-        conn.close()
-        return cantidad == 0
 
-    def descargar_datos(self, limite=386):
-        print(f"⚡ Iniciando descarga de {limite} Pokemons...")
-        conn = self._conectar()
-        cursor = conn.cursor()
-        session = requests.Session()
+        # Paso 3: Si no coincide (ej: está vacía o a medias), reiniciamos
+        if cantidad_actual > 0:
+            print("⚠️ La base de datos parece incompleta. Se reiniciará la carga.")
 
-        for i in range(1, limite + 1):
-            try:
-                res = session.get(f"{self.api_url}{i}")
-                if res.status_code == 200:
-                    data = res.json()
-                    nombre = data['name'].capitalize()
+        # Borramos tabla y creamos de nuevo para empezar limpio
+        self.db_controller.reiniciar_tabla()
+        return self.importar_datos_api()
 
-                    # Imagen HD
-                    img = data['sprites']['other']['official-artwork']['front_default'] or data['sprites'][
-                        'front_default']
+    def get_generacion(self, poke_id):
+        if poke_id <= 151: return "Gen 1"
+        if poke_id <= 251: return "Gen 2"
+        if poke_id <= 386: return "Gen 3"
+        if poke_id <= 493: return "Gen 4"
+        if poke_id <= 649: return "Gen 5"
+        if poke_id <= 721: return "Gen 6"
+        if poke_id <= 809: return "Gen 7"
+        if poke_id <= 905: return "Gen 8"
+        return "Gen 9"
 
-                    # Generación (simplificada)
-                    gen = 1
-                    if i > 151: gen = 2
-                    if i > 251: gen = 3
+    def importar_datos_api(self):
+        print(f"--- Iniciando DESCARGA MASIVA de {self.TOTAL_POKEMONS_OBJETIVO} Pokémons... ---")
+        try:
+            response = requests.get(self.api_url)
+            data = response.json()
+            results = data.get('results', [])
+            total = len(results)
 
-                    # Listas a Texto
-                    tipos = ", ".join([t['type']['name'].capitalize() for t in data['types']])
-                    habs = ", ".join([a['ability']['name'].replace('-', ' ').capitalize() for a in data['abilities']])
-                    movs = ", ".join(
-                        [m['move']['name'].replace('-', ' ').capitalize() for m in data['moves'][:8]])  # Solo 8 movs
+            count = 0
+            # Usamos session para mejorar velocidad de conexión
+            with requests.Session() as session:
+                for item in results:
+                    try:
+                        r_detalle = session.get(item['url'])
+                        detalles = r_detalle.json()
 
-                    # Stats
-                    stats = {s['stat']['name']: s['base_stat'] for s in data['stats']}
+                        poke_id = detalles['id']
 
-                    cursor.execute('''
-                        INSERT OR REPLACE INTO pokemons VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
-                    ''', (i, nombre, img, gen, data['height'] / 10, data['weight'] / 10, tipos, habs, movs,
-                          stats.get('hp', 0), stats.get('attack', 0), stats.get('defense', 0), stats.get('speed', 0)))
+                        # Mapeo de datos (Stats, Tipos, Movimientos)
+                        tipos = ",".join([t['type']['name'] for t in detalles['types']])
+                        habilidades = ",".join([a['ability']['name'] for a in detalles['abilities']])
+                        # Limitamos a los primeros 20 movimientos para no saturar la BD con texto innecesario
+                        # o guardamos todos si prefieres. Aquí guardo todos:
+                        movimientos = ",".join([m['move']['name'] for m in detalles['moves']])
 
-                    if i % 20 == 0: print(f"   ...Guardado ID {i}")
-            except Exception as e:
-                print(f"Error en {i}: {e}")
+                        stats = {s['stat']['name']: s['base_stat'] for s in detalles['stats']}
 
-        conn.commit()
-        conn.close()
-        print(" Base de datos lista.")
+                        datos_pokemon = {
+                            "id": poke_id,
+                            "nombre": detalles['name'],
+                            "imagen": f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{poke_id}.png",
+                            "tipos": tipos,
+                            "habilidades": habilidades,
+                            "movimientos": movimientos,
+                            "generacion": self.get_generacion(poke_id),
+                            "hp": stats.get('hp', 0),
+                            "ataque": stats.get('attack', 0),
+                            "defensa": stats.get('defense', 0),
+                            "ataque_especial": stats.get('special-attack', 0),
+                            "defensa_especial": stats.get('special-defense', 0),
+                            "velocidad": stats.get('speed', 0)
+                        }
 
-    def buscar_pokemons(self, nombre="", tipo="", generacion=""):
-        conn = self._conectar()
-        cursor = conn.cursor()
-        query = "SELECT * FROM pokemons WHERE 1=1"
-        params = []
+                        self.db_controller.guardar_pokemon(datos_pokemon)
+                        count += 1
 
-        if nombre:
-            query += " AND nombre LIKE ?"
-            params.append(f"%{nombre}%")
-        if tipo:
-            query += " AND tipos LIKE ?"
-            params.append(f"%{tipo}%")
-        if generacion:
-            query += " AND generacion = ?"
-            params.append(generacion)
+                        if count % 50 == 0:
+                            print(f"Guardando... {count}/{total}")
 
-        cursor.execute(query, params)
-        data = cursor.fetchall()
-        conn.close()
-        return data
+                    except Exception as e_interno:
+                        print(f"Error en ID {poke_id}: {e_interno}")
 
-    def obtener_por_id(self, id_poke):
-        conn = self._conectar()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM pokemons WHERE id = ?", (id_poke,))
-        data = cursor.fetchone()
-        conn.close()
-        return data
+            print(f"--- ¡ÉXITO! {count} pokémons guardados ---")
+            return True
+
+        except Exception as e:
+            print(f"Error CRÍTICO en loader: {e}")
+            return False
