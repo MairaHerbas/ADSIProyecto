@@ -6,7 +6,7 @@ from app import create_app
 mimetypes.add_type('application/javascript', '.js')
 mimetypes.add_type('text/css', '.css')
 # -----------------------------------------------
-
+#commit
 app = create_app()
 
 if __name__ == "__main__":
