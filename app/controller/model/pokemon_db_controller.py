@@ -1,5 +1,6 @@
 from app.database.connection import db
 
+
 class PokemonDBController:
     def __init__(self):
         self.db = db
@@ -33,10 +34,6 @@ class PokemonDBController:
             return False
 
     def reiniciar_tabla(self):
-        """
-        MÉTODO DESTRUCTIVO: Borra la tabla y la vuelve a crear.
-        Se usa solo si detectamos que la base de datos está corrupta o incompleta.
-        """
         try:
             print("--- Reiniciando tabla Pokemons (DROP & CREATE) ---")
             self.db.update("DROP TABLE IF EXISTS pokemons")
@@ -46,16 +43,11 @@ class PokemonDBController:
             return False
 
     def contar_registros(self):
-        """
-        Devuelve el número exacto de pokémons en la BD.
-        """
         sql = "SELECT COUNT(*) FROM pokemons"
         try:
             rows = self.db.select(sql)
-            # rows[0][0] contiene el número
             return rows[0][0]
         except Exception:
-            # Si da error (ej: la tabla no existe), retornamos 0
             return 0
 
     def guardar_pokemon(self, datos):
@@ -87,20 +79,33 @@ class PokemonDBController:
             print(f"[DB Error] Al guardar {datos['nombre']}: {e}")
             return False
 
-    # (Mantén el método obtener_todos igual que antes)
+    # --- AQUÍ ESTABA EL FALLO, AHORA MAPEAMOS TODO ---
     def obtener_todos(self):
         sql = "SELECT * FROM pokemons"
         try:
             rows = self.db.select(sql)
             pokemons = []
             for row in rows:
+                # Mapeamos TODAS las columnas por su índice (orden de creación)
                 pokemons.append({
                     "id": row[0],
                     "nombre": row[1],
                     "imagen": row[2],
                     "tipos": row[3],
-                    # ... resto de campos si los necesitas ...
+                    "habilidades": row[4],
+                    "movimientos": row[5],
+                    "generacion": row[6],
+                    "hp": row[7],
+                    "ataque": row[8],
+                    "ataque_especial": row[9],
+                    "defensa": row[10],
+                    "defensa_especial": row[11],
+                    "velocidad": row[12]
                 })
             return pokemons
-        except Exception:
+        except Exception as e:
+            print(f"Error recuperando pokemons: {e}")
             return []
+
+    def esta_vacia(self):
+        return self.contar_registros() == 0

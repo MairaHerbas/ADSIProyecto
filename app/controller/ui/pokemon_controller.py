@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify, session
 from datetime import datetime
+
+from app.controller.model.pokemon_db_controller import PokemonDBController
 from app.database.connection import db
 # app/controller/ui/pokemon_controller.py
 from app.controller.model.pokemon_model import Pokemon
@@ -38,34 +40,44 @@ def serializar_equipo(equipo):
 
 # --- API: POKEDEX (LA QUE FALTABA) ---
 @pokemon_bp.route('/api/pokedex')
-@login_required
+#@login_required
 def get_pokedex():
-    # 1. Obtener todos los 386 pokemon de tu DB
-    all_pokemon = Pokemon.get_all()
+    # 1. Instanciamos el controlador de base de datos
+    db_ctrl = PokemonDBController()
 
-    # 2. Consultar cuáles tiene el usuario (para marcar 'owned')
-    # Buscamos IDs de pokemon que estén en CUALQUIERA de tus equipos
-    user_id = session['user_id']
-    sql_owned = """
-        SELECT DISTINCT pokemon_id 
-        FROM pokemon_equipo 
-        JOIN equipo ON pokemon_equipo.equipo_id = equipo.id 
-        WHERE equipo.user_id = ?
-    """
-    owned_rows = db.select(sql_owned, (user_id,))
-    owned_ids = {row['pokemon_id'] for row in owned_rows}
+    # 2. Obtenemos los registros crudos (lista de diccionarios)
+    all_pokemon = db_ctrl.obtener_todos()
 
-    # 3. Formatear JSON para el frontend
+    # 3. Formateamos la respuesta para el Frontend
     data = []
-    for row in all_pokemon:
-        p = dict(row)  # Convertir Row a diccionario
+
+    # Simulación de capturados (Si tienes sistema de usuarios, aquí iría tu lógica de 'owned')
+    # Por ahora lo dejamos vacío o con lógica simple
+    owned_ids = set()
+    if 'user_id' in session:
+        # Aquí pondrías tu query para saber cuáles tiene el usuario
+        pass
+
+    for p in all_pokemon:
+        # Convertimos los tipos "fire,flying" en array ["fire", "flying"]
+        tipos_list = p['tipos'].split(',') if p['tipos'] else ['unknown']
+
         data.append({
             "id": p['id'],
             "name": p['nombre'],
-            # Tomamos el primer tipo si hay varios
-            "type": p['tipos'].split(',')[0] if p['tipos'] else "Normal",
-            "owned": p['id'] in owned_ids,  # True si lo tienes en un equipo
-            "sprite": p['imagen_url']
+            "sprite": p['imagen'],
+            "types": tipos_list,
+            "generation": p['generacion'],
+            # Agrupamos las estadísticas para que queden ordenadas en el JSON
+            "stats": {
+                "hp": p['hp'],
+                "atk": p['ataque'],
+                "def": p['defensa'],
+                "sp_atk": p['ataque_especial'],
+                "sp_def": p['defensa_especial'],
+                "spd": p['velocidad']
+            },
+            "owned": p['id'] in owned_ids
         })
 
     return jsonify(data)

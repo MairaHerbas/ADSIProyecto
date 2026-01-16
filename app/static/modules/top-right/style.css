@@ -127,3 +127,62 @@
     width: 15px; height: 15px;
     cursor: pointer;
 }
+
+/* --- ESTILOS DETALLE POKEMON --- */
+.detail-view {
+    text-align: center;
+    animation: fadeIn 0.3s;
+}
+
+.type-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    margin: 2px;
+    border-radius: 15px;
+    color: white;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Colores básicos de tipos (puedes añadir más) */
+.type-normal { background-color: #A8A77A; }
+.type-fire { background-color: #EE8130; }
+.type-water { background-color: #6390F0; }
+.type-electric { background-color: #F7D02C; }
+.type-grass { background-color: #7AC74C; }
+.type-ice { background-color: #96D9D6; }
+.type-fighting { background-color: #C22E28; }
+.type-poison { background-color: #A33EA1; }
+.type-ground { background-color: #E2BF65; }
+.type-flying { background-color: #A98FF3; }
+.type-psychic { background-color: #F95587; }
+.type-bug { background-color: #A6B91A; }
+.type-rock { background-color: #B6A136; }
+.type-ghost { background-color: #735797; }
+.type-dragon { background-color: #6F35FC; }
+.type-dark { background-color: #705746; }
+.type-steel { background-color: #B7B7CE; }
+.type-fairy { background-color: #D685AD; }
+
+.stat-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+.stat-name { width: 50px; text-align: left; font-weight: bold; color: #555; }
+.stat-val { width: 30px; text-align: right; margin-right: 5px; }
+.progress { flex-grow: 1; height: 10px; background-color: #e9ecef; border-radius: 5px; }
+.progress-bar { height: 100%; border-radius: 5px; transition: width 1s; }
+
+/* Colores de barras según stat */
+.bg-hp { background-color: #FF5959; }
+.bg-atk { background-color: #F5AC78; }
+.bg-def { background-color: #FAE078; }
+.bg-spa { background-color: #9DB7F5; }
+.bg-spd { background-color: #A7DB8D; }
+.bg-spe { background-color: #FA92B2; }
+
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
