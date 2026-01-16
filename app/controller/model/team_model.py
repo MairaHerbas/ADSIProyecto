@@ -2,6 +2,7 @@
 from datetime import datetime
 from app.database.connection import db
 
+
 class Equipo:
     def __init__(self, id, user_id, nombre_equipo, created_at):
         self.id = id
@@ -35,22 +36,31 @@ class Equipo:
 
     @staticmethod
     def delete(equipo_id):
-        # Borramos primero los miembros para mantener integridad referencial manual
         db.delete("DELETE FROM pokemon_equipo WHERE equipo_id = ?", (equipo_id,))
         db.delete("DELETE FROM equipo WHERE id = ?", (equipo_id,))
 
     @staticmethod
     def get_members(equipo_id):
-        # NOTA: Hacemos JOIN con la tabla pokemons, pero la lógica principal es del equipo
+        # CORRECCIÓN AQUÍ: Se cambió p.imagen_url por p.imagen
         sql = """
-            SELECT pe.*, p.nombre, p.tipos, p.imagen_url 
+            SELECT pe.*, p.nombre, p.tipos, p.imagen 
             FROM pokemon_equipo pe
             JOIN pokemons p ON pe.pokemon_id = p.id
             WHERE pe.equipo_id = ?
             ORDER BY pe.orden ASC
         """
         rows = db.select(sql, (equipo_id,))
-        return [dict(row) for row in rows]
+
+        # Mapeamos 'imagen' a 'sprite' o 'imagen_url' si el front lo espera así,
+        # pero el SQL debe usar el nombre real de la columna.
+        results = []
+        for row in rows:
+            d = dict(row)
+            # Para evitar errores en el front si espera imagen_url, se lo asignamos manual
+            d['imagen_url'] = d['imagen']
+            results.append(d)
+        return results
+
 
 class PokemonEquipo:
     @staticmethod
@@ -68,10 +78,5 @@ class PokemonEquipo:
 
     @staticmethod
     def delete_one(equipo_id, pokemon_id):
-        # Borra una instancia específica de un pokemon en un equipo
-        # NOTA: Si tienes dos Pikachus, esto podría borrar ambos si no usas un ID único de relación.
-        # Para la práctica académica suele valer:
         sql = "DELETE FROM pokemon_equipo WHERE equipo_id = ? AND pokemon_id = ?"
-        # IMPORTANTE: SQLite requiere LIMIT 1 compilado o lógica extra para borrar solo 1 si hay repetidos.
-        # Asumiremos borrado simple para la práctica.
         db.delete(sql, (equipo_id, pokemon_id))

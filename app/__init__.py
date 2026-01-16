@@ -29,6 +29,7 @@ def create_app():
     app.register_blueprint(main_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(changelog_bp)
+    app.register_blueprint(team_bp)
 
     @app.route('/')
     def index():
