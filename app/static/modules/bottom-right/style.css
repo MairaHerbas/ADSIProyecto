@@ -50,3 +50,41 @@
     mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>') no-repeat center/contain;
     -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>') no-repeat center/contain;
 }
+/* --- BOTONES DE ROL --- */
+
+/* Botón Ascender (Hacer Admin) */
+.btn-promote {
+    background-color: rgba(100, 149, 237, 0.15); /* Azulito suave */
+}
+.btn-promote:hover { background-color: #6495ed; } /* CornflowerBlue */
+.btn-promote::after {
+    content: ''; width: 60%; height: 60%; background-color: #556;
+    /* Icono de Chevrón Arriba / Subir rango */
+    mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>') no-repeat center/contain;
+    -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>') no-repeat center/contain;
+    transition: background-color 0.2s;
+}
+.btn-promote:hover::after { background-color: #fff; }
+
+
+/* Botón Degradar (Quitar Admin) */
+.btn-demote {
+    background-color: rgba(255, 165, 0, 0.15); /* Naranja suave */
+}
+.btn-demote:hover { background-color: #ffa500; } /* Orange */
+.btn-demote::after {
+    content: ''; width: 60%; height: 60%; background-color: #556;
+    /* Icono de Chevrón Abajo / Bajar rango */
+    mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>') no-repeat center/contain;
+    -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>') no-repeat center/contain;
+    transition: background-color 0.2s;
+}
+.btn-demote:hover::after { background-color: #fff; }
+
+/* Distintivo visual para admins en la lista */
+.item-name.is-admin {
+    color: #6495ed !important; /* Nombre en azul si es admin */
+}
+.item-name.is-admin::after {
+    content: ' (ADMIN)'; font-size: 0.6em; vertical-align: middle; opacity: 0.7;
+}

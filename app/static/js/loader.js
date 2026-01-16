@@ -18,10 +18,11 @@ async function loadModule(module) {
         const html = await response.text();
         container.innerHTML = html;
 
-        // 2. Cargar CSS específico del módulo
+        // 2. Cargar CSS (Con truco anti-caché)
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = `${module.path}/style.css`;
+        // Añadimos ?v= + fecha actual para obligar a descargar el nuevo
+        link.href = `${module.path}/style.css?v=${new Date().getTime()}`;
         document.head.appendChild(link);
 
         // 3. Cargar JS específico del módulo

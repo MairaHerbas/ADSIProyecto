@@ -11,26 +11,21 @@ export async function loadAdminData() {
     if(pendingList) setupScrollLogic(pendingList);
 
     try {
-        const res = await fetch('/api/admin/data');
+        const res = await fetch('/api/admin/dashboard-data');
         const data = await res.json();
-        
-        if (data.error) return; 
 
-        // 1. Guardar Cache
-        usersCache = data.users || [];
+        if (data.error) return;
+
+        usersCache = data.directory || [];
         pendingCache = data.pending || [];
 
-        // 2. Renderizar
         if(usersList) renderUsersList(usersCache, usersList);
         if(pendingList) renderPendingList(pendingCache, pendingList);
 
-        // 3. Configurar Buscadores
         setupSearch('admin-user-search-input', usersCache, (filtered) => renderUsersList(filtered, usersList));
         setupSearch('admin-pending-search-input', pendingCache, (filtered) => renderPendingList(filtered, pendingList));
 
-    } catch (e) {
-        console.error("Error admin", e);
-    }
+    } catch (e) { console.error("Error admin", e); }
 }
 
 function setupSearch(inputId, dataArray, renderFunc) {
@@ -38,13 +33,18 @@ function setupSearch(inputId, dataArray, renderFunc) {
     if (!input) return;
     const newInput = input.cloneNode(true);
     input.parentNode.replaceChild(newInput, input);
-    newInput.value = '';
+
     newInput.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
-        const filtered = dataArray.filter(u => u.toLowerCase().includes(term));
-        renderFunc(filtered);
+        const filtered = dataArray.filter(u =>
+            (u.username && u.username.toLowerCase().includes(term)) ||
+            (u.name && u.name.toLowerCase().includes(term))
+        );
+        renderFunc(filtered, document.getElementById(inputId === 'admin-user-search-input' ? 'list-admin-users-ul' : 'list-admin-pending-ul'));
     });
 }
+
+// ... (imports y variables cache arriba igual) ...
 
 function renderUsersList(users, ul) {
     ul.innerHTML = '';
@@ -53,81 +53,140 @@ function renderUsersList(users, ul) {
         return;
     }
 
-    users.forEach(username => {
+    users.forEach(u => {
         const li = document.createElement('li');
-        li.className = 'friend-item'; 
-        
-        // Estructura IDÉNTICA a amigos
-        li.innerHTML = `
-            <span class="item-name">${username}</span>
-            <button class="btn-remove-friend" title="Eliminar Usuario">
+        li.className = 'friend-item';
+
+        // Lógica de visualización
+        const isAdmin = u.role === 'admin';
+        const adminClass = isAdmin ? 'is-admin' : '';
+        const roleBtnClass = isAdmin ? 'btn-demote' : 'btn-promote';
+        const roleBtnTitle = isAdmin ? 'Degradar a Usuario' : 'Ascender a Administrador';
+
+        // Evitar botones en el Super Admin (username: admin)
+        const isSuperAdmin = u.username === 'admin';
+        const roleButtonHTML = isSuperAdmin ? '' :
+            `<div class="action-sq-btn ${roleBtnClass}" title="${roleBtnTitle}" data-role-action="true">
                 <div class="btn-icon-mask"></div>
-            </button>
+            </div>`;
+
+        li.innerHTML = `
+            <div style="display:flex; flex-direction:column;">
+                <span class="item-name ${adminClass}">${u.username}</span>
+                <span style="font-size:0.8em; color:#888">${u.email}</span>
+            </div>
+            <div class="actions-wrapper">
+                ${roleButtonHTML}
+
+                <div class="action-sq-btn btn-trash" title="Eliminar cuenta">
+                    <div class="btn-icon-mask"></div>
+                </div>
+            </div>
         `;
 
-        li.addEventListener('click', (e) => {
-            if(e.target.closest('.btn-remove-friend')) return;
-            if(window.ModalSystem) window.ModalSystem.open('profile', { username: username, stats: "Usuario" });
+        // EVENTO: CAMBIAR ROL
+        const roleBtn = li.querySelector(`.${roleBtnClass}`);
+        if(roleBtn) {
+            roleBtn.addEventListener('click', async () => {
+                const newRole = isAdmin ? 'user' : 'admin';
+                const actionText = isAdmin ? 'degradar a Usuario' : 'ascender a Administrador';
+
+                if(confirm(`¿Quieres ${actionText} a ${u.username}?`)) {
+                    await changeUserRole(u.id, newRole);
+                }
+            });
+        }
+
+        // EVENTO: ELIMINAR (Igual que antes)
+        li.querySelector('.btn-trash').addEventListener('click', async () => {
+            if(confirm(`⚠️ ¿Eliminar permanentemente a @${u.username}?`)) {
+                await deleteUser(u.id);
+            }
         });
 
-        li.querySelector('.btn-remove-friend').addEventListener('click', async () => {
-            if(confirm(`¿Eliminar definitivamente a ${username}?`)) {
-                await fetch('/api/admin/delete-user', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({name: username})
-                });
-                const idx = usersCache.indexOf(username);
-                if (idx > -1) usersCache.splice(idx, 1);
-                li.remove();
-                if(ul.children.length === 0) ul.innerHTML = '<li class="friend-item" style="justify-content:center"><span class="item-name" style="opacity:0.5">Sin resultados</span></li>';
+        ul.appendChild(li);
+    });
+}
+
+// Nueva función auxiliar para llamar a la API de rol
+async function changeUserRole(id, newRole) {
+    try {
+        const res = await fetch(`/api/admin/user/${id}/role`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ role: newRole })
+        });
+        const data = await res.json();
+
+        if (data.error) {
+            alert("Error: " + data.error);
+        } else {
+            // alert(data.msg); // Opcional: mostrar mensaje de éxito
+            loadAdminData(); // Recargar lista visualmente
+        }
+    } catch(e) { console.error(e); }
+}
+
+
+
+// --- LISTA DE SOLICITUDES PENDIENTES ---
+function renderPendingList(users, ul) {
+    ul.innerHTML = '';
+    if (users.length === 0) {
+        ul.innerHTML = '<li class="friend-item" style="justify-content:center"><span class="item-name" style="opacity:0.5">No hay solicitudes</span></li>';
+        return;
+    }
+
+    users.forEach(u => {
+        const li = document.createElement('li');
+        li.className = 'friend-item';
+
+        li.innerHTML = `
+             <div style="display:flex; flex-direction:column;">
+                <span class="item-name">${u.username}</span>
+                <span style="font-size:0.8em; color:#888">${u.email}</span>
+            </div>
+            <div class="actions-wrapper">
+                <div class="action-sq-btn btn-accept" title="Aprobar"><div class="btn-icon-mask"></div></div>
+                <div class="action-sq-btn btn-trash" title="Rechazar y Eliminar"><div class="btn-icon-mask"></div></div>
+            </div>
+        `;
+
+        // APROBAR
+        li.querySelector('.btn-accept').addEventListener('click', async () => {
+            await fetch(`/api/admin/user/${u.id}/status`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({status: 'aprobado'})
+            });
+            loadAdminData();
+        });
+
+        // RECHAZAR (ELIMINAR)
+        li.querySelector('.btn-trash').addEventListener('click', async () => {
+            if(confirm(`¿Rechazar solicitud de ${u.username} y borrar datos?`)) {
+                await deleteUser(u.id);
             }
         });
         ul.appendChild(li);
     });
 }
 
-function renderPendingList(users, ul) {
-    ul.innerHTML = '';
-    if (users.length === 0) {
-        ul.innerHTML = '<li class="friend-item" style="justify-content:center"><span class="item-name" style="opacity:0.5">Sin resultados</span></li>';
-        return;
+// Función auxiliar para llamar a la API de borrado
+async function deleteUser(id) {
+    try {
+        const res = await fetch(`/api/admin/user/${id}/delete`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const data = await res.json();
+
+        if (data.error) {
+            alert("Error: " + data.error);
+        } else {
+            loadAdminData(); // Recargar lista
+        }
+    } catch(e) {
+        console.error("Error deleting", e);
+        alert("Error de conexión");
     }
-
-    users.forEach(username => {
-        const li = document.createElement('li');
-        li.className = 'friend-item';
-        
-        // Estructura IDÉNTICA a pendientes
-        li.innerHTML = `
-            <span class="item-name">${username}</span>
-            <div class="actions-wrapper">
-                <div class="action-sq-btn btn-accept" title="Aprobar"><div class="btn-icon-mask"></div></div>
-                <div class="action-sq-btn btn-reject" title="Rechazar"><div class="btn-icon-mask"></div></div>
-            </div>
-        `;
-
-        li.querySelector('.btn-accept').addEventListener('click', async () => {
-            await fetch('/api/admin/approve-user', {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({name: username})
-            });
-            const idx = pendingCache.indexOf(username);
-            if (idx > -1) pendingCache.splice(idx, 1);
-            li.remove();
-            loadAdminData(); 
-        });
-
-        li.querySelector('.btn-reject').addEventListener('click', async () => {
-            if(confirm(`¿Rechazar a ${username}?`)) {
-                await fetch('/api/admin/reject-user', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({name: username})
-                });
-                const idx = pendingCache.indexOf(username);
-                if (idx > -1) pendingCache.splice(idx, 1);
-                li.remove();
-            }
-        });
-        ul.appendChild(li);
-    });
 }

@@ -22,6 +22,30 @@ class User:
         return User(**dict(row[0])) if row else None
 
     @staticmethod
+    def filter_users(status=None, search=None):
+        # Excluir admins para seguridad
+        query = "SELECT * FROM user WHERE role != 'admin'"
+        params = []
+
+        if status:
+            query += " AND status = ?"
+            params.append(status)
+
+        if search:
+            query += " AND (username LIKE ? OR name LIKE ?)"
+            term = f"%{search}%"
+            params.append(term)
+            params.append(term)
+
+        query += " ORDER BY created_at DESC"
+
+        rows = db.select(query, tuple(params))
+        return [User(**dict(r)) for r in rows]
+
+    @staticmethod
+    def update_status(user_id, new_status):
+        return db.update("UPDATE user SET status = ? WHERE id = ?", (new_status, user_id))
+    @staticmethod
     def get_by_id(user_id):
         row = db.select("SELECT * FROM user WHERE id = ?", (user_id,))
         return User(**dict(row[0])) if row else None
@@ -36,20 +60,26 @@ class User:
         rows = db.select("SELECT * FROM user WHERE id != ?", (user_id,))
         return [User(**dict(r)) for r in rows]
 
-    # --- SQL: Creación ---
     @staticmethod
-    def create(name, username, email, password):
-        hashed_pw = generate_password_hash(password)
-        created_at = datetime.utcnow()
-        # Estado 'activo' por defecto para pruebas
-        sql = """
-            INSERT INTO user (name, username, email, password_hash, role, status, created_at)
-            VALUES (?, ?, ?, ?, 'user', 'activo', ?)
-        """
-        return db.insert(sql, (name, username, email, hashed_pw, created_at))
+    def create(name, username, email, password, role='user', status='pendiente'):
+            """
+            Crea un usuario. Por defecto role='user' y status='pendiente'
+            para el sistema de aprobación.
+            """
+            hashed_pw = generate_password_hash(password)
+            created_at = datetime.utcnow()
+
+            sql = """
+                  INSERT INTO user (name, username, email, password_hash, role, status, created_at)
+                  VALUES (?, ?, ?, ?, ?, ?, ?) \
+                  """
+            # Ahora pasamos 'role' y 'status' dinámicamente en lugar de escribirlos fijos
+            return db.insert(sql, (name, username, email, hashed_pw, role, status, created_at))
+
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
 
     # --- Propiedades de Relación ---
     @property
@@ -65,9 +95,18 @@ class User:
     @property
     def equipos(self):
         # Importación local para evitar ciclos
-        from app.controller.model.pokemon_model import Equipo
+        from app.controller.model.team_model import Equipo
         return Equipo.get_by_user(self.id)
 
+    @staticmethod
+    def delete(user_id):
+        """Borra un usuario permanentemente de la base de datos"""
+        return db.delete("DELETE FROM user WHERE id = ?", (user_id,))
+
+    @staticmethod
+    def update_role(user_id, new_role):
+        """Actualiza el rol del usuario ('admin' o 'user')"""
+        return db.update("UPDATE user SET role = ? WHERE id = ?", (new_role, user_id))
 
 # --- CLASE EVENT (Esta es la que te faltaba) ---
 # --- CLASE EVENT (Actualizada) ---

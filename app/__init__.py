@@ -9,11 +9,13 @@ from app.controller.ui.friends import friends_bp
 from app.controller.ui.main import main_bp
 from app.controller.ui.admin import admin_bp
 from app.controller.ui.team_controller import team_bp
-
 from app.controller.ui.routes_changelog import changelog_bp
 
 # Importar Loader
 from app.services.pokemon_loader import PokemonLoader
+
+# ✅ IMPORTAR MODELO DE USUARIO (Necesario para crear el admin)
+from app.controller.model.user_model import User
 
 
 def create_app():
@@ -33,14 +35,15 @@ def create_app():
         return render_template('index.html')
 
     with app.app_context():
-        # 1. PRIMERO: Cargar Pokemons (Crea la tabla 'pokemons' y descarga datos si hace falta)
-        # Es importante hacerlo antes de init_tables para que la tabla 'pokemons' exista
-        # cuando 'pokemon_equipo' intente referenciarla.
+        # 1. Cargar Pokemons
         loader = PokemonLoader()
-        loader.descargar_datos()  # <--- ESTA ES LA ÚNICA LLAMADA NECESARIA
+        loader.descargar_datos()
 
-        # 2. SEGUNDO: Crear resto de tablas del Sistema
+        # 2. Crear Tablas del Sistema
         init_tables()
+
+        # 3. ✅ CREAR ADMINISTRADOR POR DEFECTO (Si no existe)
+        create_default_admin()
 
     return app
 
@@ -48,83 +51,264 @@ def create_app():
 def init_tables():
     """Crea las tablas del sistema manualmente con SQL puro."""
 
-    # Tabla USER
+    # Tabla USER (Asegúrate de borrar la DB antigua para que se cree con status/role)
     db.insert("""
-    CREATE TABLE IF NOT EXISTS user (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        username TEXT UNIQUE NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        role TEXT DEFAULT 'user',
-        status TEXT DEFAULT 'pendiente',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    """)
+              CREATE TABLE IF NOT EXISTS user
+              (
+                  id
+                  INTEGER
+                  PRIMARY
+                  KEY
+                  AUTOINCREMENT,
+                  name
+                  TEXT
+                  NOT
+                  NULL,
+                  username
+                  TEXT
+                  UNIQUE
+                  NOT
+                  NULL,
+                  email
+                  TEXT
+                  UNIQUE
+                  NOT
+                  NULL,
+                  password_hash
+                  TEXT
+                  NOT
+                  NULL,
+                  role
+                  TEXT
+                  DEFAULT
+                  'user',
+                  status
+                  TEXT
+                  DEFAULT
+                  'pendiente',
+                  created_at
+                  TIMESTAMP
+                  DEFAULT
+                  CURRENT_TIMESTAMP
+              );
+              """)
 
     # Tabla EQUIPO
     db.insert("""
-    CREATE TABLE IF NOT EXISTS equipo (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        nombre_equipo TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES user(id)
-    );
-    """)
+              CREATE TABLE IF NOT EXISTS equipo
+              (
+                  id
+                  INTEGER
+                  PRIMARY
+                  KEY
+                  AUTOINCREMENT,
+                  user_id
+                  INTEGER
+                  NOT
+                  NULL,
+                  nombre_equipo
+                  TEXT
+                  NOT
+                  NULL,
+                  created_at
+                  TIMESTAMP
+                  DEFAULT
+                  CURRENT_TIMESTAMP,
+                  FOREIGN
+                  KEY
+              (
+                  user_id
+              ) REFERENCES user
+              (
+                  id
+              )
+                  );
+              """)
 
     # Tabla POKEMON_EQUIPO
     db.insert("""
-    CREATE TABLE IF NOT EXISTS pokemon_equipo (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        equipo_id INTEGER NOT NULL,
-        pokemon_id INTEGER NOT NULL,
-        orden INTEGER NOT NULL,
-        apodo TEXT,
-        habilidad TEXT,
-        movimiento TEXT,
-        fecha_captura TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(equipo_id) REFERENCES equipo(id) ON DELETE CASCADE,
-        FOREIGN KEY(pokemon_id) REFERENCES pokemons(id)
-    );
-    """)
+              CREATE TABLE IF NOT EXISTS pokemon_equipo
+              (
+                  id
+                  INTEGER
+                  PRIMARY
+                  KEY
+                  AUTOINCREMENT,
+                  equipo_id
+                  INTEGER
+                  NOT
+                  NULL,
+                  pokemon_id
+                  INTEGER
+                  NOT
+                  NULL,
+                  orden
+                  INTEGER
+                  NOT
+                  NULL,
+                  apodo
+                  TEXT,
+                  habilidad
+                  TEXT,
+                  movimiento
+                  TEXT,
+                  fecha_captura
+                  TIMESTAMP
+                  DEFAULT
+                  CURRENT_TIMESTAMP,
+                  FOREIGN
+                  KEY
+              (
+                  equipo_id
+              ) REFERENCES equipo
+              (
+                  id
+              ) ON DELETE CASCADE,
+                  FOREIGN KEY
+              (
+                  pokemon_id
+              ) REFERENCES pokemons
+              (
+                  id
+              )
+                  );
+              """)
 
     # Tabla FRIEND_REQUEST
     db.insert("""
-    CREATE TABLE IF NOT EXISTS friend_request (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sender_id INTEGER NOT NULL,
-        receiver_id INTEGER NOT NULL,
-        status TEXT DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(sender_id) REFERENCES user(id),
-        FOREIGN KEY(receiver_id) REFERENCES user(id)
-    );
-    """)
+              CREATE TABLE IF NOT EXISTS friend_request
+              (
+                  id
+                  INTEGER
+                  PRIMARY
+                  KEY
+                  AUTOINCREMENT,
+                  sender_id
+                  INTEGER
+                  NOT
+                  NULL,
+                  receiver_id
+                  INTEGER
+                  NOT
+                  NULL,
+                  status
+                  TEXT
+                  DEFAULT
+                  'pending',
+                  created_at
+                  TIMESTAMP
+                  DEFAULT
+                  CURRENT_TIMESTAMP,
+                  FOREIGN
+                  KEY
+              (
+                  sender_id
+              ) REFERENCES user
+              (
+                  id
+              ),
+                  FOREIGN KEY
+              (
+                  receiver_id
+              ) REFERENCES user
+              (
+                  id
+              )
+                  );
+              """)
 
     # Tabla FRIENDSHIP
     db.insert("""
-    CREATE TABLE IF NOT EXISTS friendship (
-        user_id INTEGER,
-        friend_id INTEGER,
-        PRIMARY KEY (user_id, friend_id),
-        FOREIGN KEY(user_id) REFERENCES user(id),
-        FOREIGN KEY(friend_id) REFERENCES user(id)
-    );
-    """)
+              CREATE TABLE IF NOT EXISTS friendship
+              (
+                  user_id
+                  INTEGER,
+                  friend_id
+                  INTEGER,
+                  PRIMARY
+                  KEY
+              (
+                  user_id,
+                  friend_id
+              ),
+                  FOREIGN KEY
+              (
+                  user_id
+              ) REFERENCES user
+              (
+                  id
+              ),
+                  FOREIGN KEY
+              (
+                  friend_id
+              ) REFERENCES user
+              (
+                  id
+              )
+                  );
+              """)
 
     # Tabla CHANGELOG_EVENT
     db.insert("""
-    CREATE TABLE IF NOT EXISTS Changelog_Event (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        idUsuario INTEGER NOT NULL,
-        tipo TEXT NOT NULL,
-        descripcion TEXT NOT NULL,
-        fecha DATETIME DEFAULT (datetime('now','localtime')),
-        FOREIGN KEY(idUsuario) REFERENCES user(id)
-    );
-    """)
+              CREATE TABLE IF NOT EXISTS Changelog_Event
+              (
+                  id
+                  INTEGER
+                  PRIMARY
+                  KEY
+                  AUTOINCREMENT,
+                  idUsuario
+                  INTEGER
+                  NOT
+                  NULL,
+                  tipo
+                  TEXT
+                  NOT
+                  NULL,
+                  descripcion
+                  TEXT
+                  NOT
+                  NULL,
+                  fecha
+                  DATETIME
+                  DEFAULT (
+                  datetime
+              (
+                  'now',
+                  'localtime'
+              )),
+                  FOREIGN KEY
+              (
+                  idUsuario
+              ) REFERENCES user
+              (
+                  id
+              )
+                  );
+              """)
 
     print("\n" + "=" * 50)
     print("✅  API CARGADA CORRECTAMENTE: Tablas inicializadas.")
     print("=" * 50 + "\n")
+
+
+# ✅ NUEVA FUNCIÓN PARA CREAR ADMIN AL INICIO
+def create_default_admin():
+    try:
+        # Verificar si ya existe el admin
+        if User.get_by_email("admin@demo.com"):
+            return  # Ya existe, no hacemos nada
+
+        print("--- CREANDO SUPER ADMIN ---")
+        User.create(
+            name="Administrador Sistema",
+            username="admin",
+            email="admin@demo.com",
+            password="admin123",
+            role="admin",  # ROL IMPORTANTE
+            status="aprobado"  # ESTADO IMPORTANTE
+        )
+        print("👑 ADMIN CREADO: admin@demo.com / admin123")
+
+    except Exception as e:
+        print(f"⚠️ Error creando admin (probablemente tablas no actualizadas): {e}")

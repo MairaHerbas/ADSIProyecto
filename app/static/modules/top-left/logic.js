@@ -1,63 +1,43 @@
 (async function() {
-    console.log("Cargando Top-Left...");
+    console.log("Cargando Top-Left (Modo Simple)...");
 
     try {
-        // 1. Obtener datos del usuario
         const res = await fetch('/api/user-info');
-        if (!res.ok) return; // Si falla (no logueado), no hacemos nada
+        if (!res.ok) return;
 
         const user = await res.json();
 
-        // 2. Rellenar HTML (Avatar, Nombre, Nivel, XP)
-        const nameEl = document.getElementById('tl-username');
-        const lvlEl = document.getElementById('tl-lvl-val');
-        const xpEl = document.getElementById('tl-xp-fill');
+        // 1. Rellenar Textos (Nombre Real y Nick)
+        const realNameEl = document.getElementById('tl-realname');
+        const userNameEl = document.getElementById('tl-username');
         const avatarEl = document.getElementById('tl-avatar-img');
 
-        if(nameEl) nameEl.textContent = user.username;
-        if(lvlEl) lvlEl.textContent = user.level;
+        // Usamos los datos que vienen del backend
+        // Nota: Asegúrate de que /api/user-info devuelve 'name' también.
+        // Si no, mostrará el username en ambos sitios temporalmente.
+        if(realNameEl) realNameEl.textContent = user.name || user.username;
+        if(userNameEl) userNameEl.textContent = "@" + user.username;
 
-        if(xpEl) {
-            const xpPercent = (user.xp / user.xp_next) * 100;
-            xpEl.style.width = `${xpPercent}%`;
-        }
-
-        // Cargar avatar personalizado si existe
-        if(avatarEl && user.avatar) {
-             // Si tienes sistema de avatares, aquí iría la URL correcta
-             // avatarEl.src = user.avatar;
-        }
-
-        // --- 3. EVENTOS DE CLIC (ABRIR PERFIL) ---
-        // Esto es lo que te faltaba:
+        // 2. Evento Abrir Perfil
         const avatarBtn = document.getElementById('tl-avatar-btn');
-
-        // Función para abrir perfil
         const openProfile = () => {
-            console.log("Abriendo perfil...");
-            if(window.ModalSystem) {
-                window.ModalSystem.open('profile');
-            } else {
-                console.error("El sistema modal no está listo.");
-            }
+            if(window.ModalSystem) window.ModalSystem.open('profile');
         };
 
-        // Añadimos el evento a la foto y al nombre
         if (avatarBtn) avatarBtn.addEventListener('click', openProfile);
-        if (nameEl) nameEl.addEventListener('click', openProfile);
+        if (realNameEl) realNameEl.addEventListener('click', openProfile);
 
-
-        // --- 4. LÓGICA DE LOGOUT (BOTÓN APAGAR) ---
+        // 3. Evento Logout
         const btnLogout = document.getElementById('btn-logout');
         if (btnLogout) {
             btnLogout.addEventListener('click', async (e) => {
-                e.stopPropagation(); // Evita que el click se propague
-                if(confirm("¿Cerrar sesión y salir?")) {
+                e.stopPropagation();
+                if(confirm("¿Cerrar sesión?")) {
                     await fetch('/api/logout', { method: 'POST' });
                     window.location.reload();
                 }
             });
         }
 
-    } catch (e) { console.error("Error en Top-Left:", e); }
+    } catch (e) { console.error("Error Top-Left:", e); }
 })();

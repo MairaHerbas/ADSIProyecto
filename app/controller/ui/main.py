@@ -1,25 +1,33 @@
 from flask import Blueprint, jsonify, session
 from app.controller.model.team_model import Equipo
 from app.utils import login_required
+# ✅ ESTA ES LA LÍNEA QUE TE FALTA:
+from app.controller.model.user_model import User
 
 main_bp = Blueprint('main', __name__)
 
 
 @main_bp.route('/api/user-info')
-@login_required
 def get_user_info():
+    # 1. Verificar sesión
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
     user_id = session['user_id']
-    username = session.get('user_name', 'Entrenador')  # Guardado en login
-    role = session.get('role', 'user')
 
-    # Obtener equipos con SQL
+    # 2. Obtener DATOS REALES (Ahora funcionará porque User ya está importado)
+    user = User.get_by_id(user_id)
+
+    if not user:
+        session.clear()
+        return jsonify({"error": "Usuario no existe"}), 404
+
+    # 3. Obtener equipos
     equipos_raw = Equipo.get_by_user(user_id)
-
-    # Formatear para frontend
     equipos_json = []
+
     for eq in equipos_raw:
         miembros = Equipo.get_members(eq['id'])
-        # Adaptar formato de miembros
         miembros_fmt = [{
             "pokemon_id": m['pokemon_id'],
             "name": m['nombre'],
@@ -35,10 +43,14 @@ def get_user_info():
             "members": miembros_fmt
         })
 
+    # 4. Retorno FINAL
     return jsonify({
-        "username": username,
-        "stats": f"Rango: {role}",
-        "avatar_url": f"https://api.dicebear.com/9.x/notionists/svg?seed={username}",
-        "teams": equipos_json,
-        "is_admin": (role == 'admin')
+        "username": user.username,
+        "name": getattr(user, 'name', user.username),
+        "email": user.email,
+        "role": user.role,
+        "is_admin": (user.role == 'admin'),  # Esto es lo que busca el JS
+        "status": getattr(user, 'status', 'aprobado'),
+        "avatar_url": f"https://api.dicebear.com/9.x/notionists/svg?seed={user.username}",
+        "teams": equipos_json
     })

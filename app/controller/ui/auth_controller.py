@@ -5,72 +5,119 @@ auth_bp = Blueprint('auth', __name__)
 
 
 # --- API LOGIN ---
-@auth_bp.route('/api/login', methods=['POST'])
+@auth_bp.route("/api/login", methods=["POST"])
 def login():
-    # 1. Recibir datos del usuario
     data = request.json
-    email = data.get('email', '').strip().lower()
-    password = data.get('password', '')
+    email = data.get("email")
+    password = data.get("password")
 
-    # 2. Buscar usuario (Lógica original adaptada)
+    # Buscar usuario por email
     user = User.get_by_email(email)
 
-    if not user or not user.check_password(password):
-        return jsonify({"success": False, "error": "Credenciales incorrectas"}), 401
+    if user and user.check_password(password):
 
-    if user.status != 'activo':
-        # Replica la lógica de 'pendiente' del auth.py original
-        return jsonify({"success": False, "error": "Tu cuenta está pendiente de aprobación"}), 403
+        # --- 🛑 NUEVA REGLA: VERIFICAR ESTADO ---
+        # Si el usuario tiene atributo status y no es 'aprobado'
+        current_status = getattr(user, 'status', 'aprobado')  # Por defecto aprobado si no existe campo
 
-    # 3. Guardar en sesión
-    session['user_id'] = user.id
-    session['user_name'] = user.name
-    session['role'] = user.role
+        if current_status == 'pendiente':
+            return jsonify({
+                "success": False,
+                "error": "Tu cuenta está pendiente de aprobación por un Administrador."
+            }), 403  # Forbidden
 
-    return jsonify({"success": True, "msg": f"Bienvenido {user.name}", "redirect": "/"})
+        if current_status == 'bloqueado':
+            return jsonify({"success": False, "error": "Esta cuenta ha sido bloqueada."}), 403
+
+        # --- LOGIN EXITOSO ---
+        session["user_id"] = user.id
+        session["user_name"] = user.username
+        session["role"] = user.role
+
+        return jsonify({"success": True, "msg": "Login correcto", "role": user.role})
+
+    return jsonify({"success": False, "error": "Credenciales inválidas"}), 401
 
 
-# --- API REGISTRO ---
-@auth_bp.route('/api/register', methods=['POST'])
+@auth_bp.route("/api/register", methods=["POST"])
 def register():
     data = request.json
-    name = data.get('name', '').strip()
-    username = data.get('username', '').strip().lower()
-    email = data.get('email', '').strip().lower()
-    password = data.get('password', '')
-    confirm = data.get('confirm', '')  # Si el frontend envía confirmación
 
-    # 1. Validaciones (Copiadas del auth.py original)
-    if not name or not username or not email or not password:
-        return jsonify({"success": False, "error": "Rellena todos los campos"}), 400
+    # 1. Validar campos obligatorios
+    if not data or not data.get("username") or not data.get("email"):
+        return jsonify({"success": False, "error": "Faltan datos"}), 400
 
-    if "@" not in email or "." not in email:
-        return jsonify({"success": False, "error": "Email inválido"}), 400
+    # 2. 🛑 COMPROBAR DUPLICADOS (EMAIL Y USUARIO)
+    if User.get_by_email(data.get("email")):
+        return jsonify({"success": False, "error": "El email ya está registrado."}), 400
 
-    if confirm and password != confirm:
-        return jsonify({"success": False, "error": "Las contraseñas no coinciden"}), 400
-
-    if len(password) < 6:
-        return jsonify({"success": False, "error": "La contraseña debe tener al menos 6 caracteres"}), 400
-
-    # 2. Verificar duplicados en DB
-    if User.get_by_username(username):
-        return jsonify({"success": False, "error": "El nombre de usuario ya está en uso"}), 400
-
-    if User.get_by_email(email):
-        return jsonify({"success": False, "error": "El email ya está registrado"}), 400
+    if User.get_by_username(data.get("username")):  # <--- NUEVA COMPROBACIÓN
+        return jsonify({"success": False, "error": "El nombre de usuario ya está en uso."}), 400
 
     # 3. Crear usuario
     try:
-        User.create(name, username, email, password)
-        # Nota: El mensaje original decía "Pendiente de aprobación", pero aquí devolvemos éxito directo
-        return jsonify({"success": True, "msg": "Cuenta creada correctamente. ¡Inicia sesión!"})
+        new_user = User.create(
+            name=data.get("name"),
+            username=data.get("username"),
+            email=data.get("email"),
+            password=data.get("password"),
+            role="user",
+            status="pendiente"
+        )
+
+        if new_user:
+            return jsonify({"success": True, "msg": "Cuenta creada. Espera aprobación."})
+        else:
+            return jsonify({"success": False, "error": "Error en base de datos"}), 500
+
     except Exception as e:
-        return jsonify({"success": False, "error": f"Error interno: {str(e)}"}), 500
-
-
+        return jsonify({"success": False, "error": f"Error: {str(e)}"}), 500
 # --- API LOGOUT ---
 @auth_bp.route("/api/logout", methods=["POST"])
 def logout():
     session.clear() # Borra todos los datos de la sesión (id, role, etc.)
     return jsonify({"success": True, "msg": "Sesión cerrada"})
+
+
+@auth_bp.route("/api/profile-details")
+def profile_details():
+    if "user_id" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    user = User.get_by_id(session["user_id"])
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    real_name = getattr(user, 'name', '')
+    username = getattr(user, 'username', '')
+    email = getattr(user, 'email', '')
+
+    return jsonify({
+        "title": "DATOS DE LA CUENTA",
+        "fields": [
+            {
+                "id": "name",
+                "label": "NOMBRE COMPLETO",
+                "value": real_name,
+                "editable": True  # Este es el único que dejaremos cambiar
+            },
+            {
+                "id": "username",
+                "label": "NOMBRE DE USUARIO",
+                "value": username,
+                "editable": False # 🔒 AHORA BLOQUEADO
+            },
+            {
+                "id": "email",
+                "label": "CORREO ELECTRÓNICO",
+                "value": email,
+                "editable": False # 🔒 BLOQUEADO
+            },
+            {
+                "id": "password",
+                "label": "CONTRASEÑA",
+                "value": "********",
+                "editable": True
+            }
+        ]
+    })
