@@ -108,6 +108,43 @@ class User:
         """Actualiza el rol del usuario ('admin' o 'user')"""
         return db.update("UPDATE user SET role = ? WHERE id = ?", (new_role, user_id))
 
+    # --- AÑADIR EN LA CLASE USER (user_model.py) ---
+
+    @staticmethod
+    def get_friendship_candidates(user_id):
+        """
+        Devuelve lista de usuarios que NO son amigos ni tienen peticiones pendientes.
+        """
+        # Esta query selecciona el username de todos los usuarios...
+        # ...excluyendo al propio usuario
+        # ...excluyendo amigos confirmados (tabla friendship)
+        # ...excluyendo solicitudes pendientes (tabla friend_request)
+
+        sql = """
+              SELECT username \
+              FROM user
+              WHERE id != ?
+            AND status = 'aprobado'  -- Solo usuarios activos (opcional)
+            AND id NOT IN (
+                SELECT friend_id FROM friendship WHERE user_id = ?
+                UNION
+                SELECT user_id FROM friendship WHERE friend_id = ?
+            )
+            AND id NOT IN (
+                SELECT receiver_id FROM friend_request 
+                WHERE sender_id = ? AND status = 'pending'
+            )
+            AND id NOT IN (
+                SELECT sender_id FROM friend_request 
+                WHERE receiver_id = ? AND status = 'pending'
+            ) \
+              """
+        # Pasamos el user_id 5 veces porque hay 5 ? en la consulta
+        rows = db.select(sql, (user_id, user_id, user_id, user_id, user_id))
+
+        # Devolvemos una lista simple de nombres: ['Ash', 'Misty', 'Brock']
+        return [r['username'] for r in rows]
+
 # --- CLASE EVENT (Esta es la que te faltaba) ---
 # --- CLASE EVENT (Actualizada) ---
 class Event:

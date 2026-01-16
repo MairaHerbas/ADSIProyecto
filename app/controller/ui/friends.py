@@ -1,99 +1,140 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, jsonify, request, session
 from app.controller.model.user_model import User, FriendRequest
-from app.utils import login_required, get_current_user
+from app.utils import login_required
 
 friends_bp = Blueprint('friends', __name__)
 
 
+# --- 1. CARGAR DATOS ---
 @friends_bp.route('/api/friends/data')
 @login_required
 def get_friends_data():
-    me = get_current_user()
-    if not me: return jsonify({"error": "No user"}), 401
+    me_id = session['user_id']
+    user = User.get_by_id(me_id)
 
-    # Obtener amigos y solicitudes usando los métodos SQL
-    amigos_list = [u.username for u in me.friends]
+    if not user:
+        return jsonify({"error": "User not found"}), 404
 
-    pending_reqs = FriendRequest.get_received_pending(me.id)
-    pendientes_list = [req.sender_name for req in pending_reqs]
+    # Amigos: Lista de objetos
+    friends_list = user.friends
+    friends_fmt = [{"name": f.username, "status": "online"} for f in friends_list]
+
+    # Pendientes: Lista de objetos
+    pending_list = FriendRequest.get_received_pending(me_id)
+    pending_fmt = [{"name": p.sender_name} for p in pending_list]
 
     return jsonify({
-        "friends": amigos_list,
-        "pending": pendientes_list
+        "friends": friends_fmt,
+        "pending": pending_fmt
     })
 
 
-@friends_bp.route('/api/friends/request', methods=['POST'])
-@login_required
-def request_friend():
-    data = request.json
-    target_username = data.get('name')
-    me = get_current_user()
-
-    target = User.get_by_username(target_username)
-    if not target:
-        return jsonify({"status": "error", "msg": "Usuario no encontrado"}), 404
-
-    if target.id == me.id:
-        return jsonify({"status": "error", "msg": "No puedes enviarte solicitud a ti mismo"})
-
-    # Verificar si ya son amigos
-    if any(f.id == target.id for f in me.friends):
-        return jsonify({"status": "error", "msg": "Ya sois amigos"})
-
-    # Verificar si ya hay solicitud pendiente
-    if FriendRequest.get_existing(me.id, target.id):
-        return jsonify({"status": "error", "msg": "Ya hay una solicitud pendiente"})
-
-    FriendRequest.create(me.id, target.id)
-    return jsonify({"status": "success", "msg": f"Solicitud enviada a {target_username}"})
-
-
+# --- 2. ACEPTAR SOLICITUD ---
 @friends_bp.route('/api/friends/accept', methods=['POST'])
 @login_required
-def accept_friend():
-    data = request.json
-    sender_name = data.get('name')
-    me = get_current_user()
+def accept_request():
+    me_id = session['user_id']
+    sender_name = request.json.get('name')
 
-    # Buscar la solicitud por nombre del remitente
-    pending = FriendRequest.get_received_pending(me.id)
-    req_to_accept = next((r for r in pending if r.sender_name == sender_name), None)
+    sender = User.get_by_username(sender_name)
+    if not sender:
+        return jsonify({"status": "error", "message": "Usuario no encontrado"}), 404
 
-    if req_to_accept:
-        FriendRequest.accept(req_to_accept.id)
-        return jsonify({"status": "success", "msg": f"{sender_name} aceptado"})
+    # Buscamos la solicitud en la BD
+    req = FriendRequest.get_existing(sender.id, me_id)
 
-    return jsonify({"status": "error", "msg": "Solicitud no encontrada"}), 404
+    # --- CORRECCIÓN CRÍTICA: USAR CORCHETES [] ---
+    if req and req['status'] == 'pending':
+        FriendRequest.accept(req['id'])
+        return jsonify({"status": "success", "msg": f"Ahora eres amigo de {sender_name}"})
+
+    return jsonify({"status": "error", "message": "No hay solicitud pendiente"}), 400
 
 
+# --- 3. RECHAZAR SOLICITUD ---
 @friends_bp.route('/api/friends/reject', methods=['POST'])
 @login_required
-def reject_friend():
-    data = request.json
-    sender_name = data.get('name')
-    me = get_current_user()
+def reject_request():
+    me_id = session['user_id']
+    sender_name = request.json.get('name')
 
-    pending = FriendRequest.get_received_pending(me.id)
-    req_to_reject = next((r for r in pending if r.sender_name == sender_name), None)
+    sender = User.get_by_username(sender_name)
+    if not sender:
+        return jsonify({"status": "error"}), 404
 
-    if req_to_reject:
-        FriendRequest.reject(req_to_reject.id)
+    req = FriendRequest.get_existing(sender.id, me_id)
+
+    # --- CORRECCIÓN CRÍTICA: USAR CORCHETES [] ---
+    if req:
+        FriendRequest.reject(req['id'])
         return jsonify({"status": "success", "msg": "Solicitud rechazada"})
 
-    return jsonify({"status": "error", "msg": "Solicitud no encontrada"}), 404
+    return jsonify({"status": "error"}), 400
 
 
+# --- 4. LISTAR CANDIDATOS ---
+@friends_bp.route('/api/users/available')
+@login_required
+def get_available_users():
+    me_id = session['user_id']
+    candidates = User.get_friendship_candidates(me_id)
+    return jsonify(candidates)
+
+
+# --- 5. ENVIAR SOLICITUD ---
+@friends_bp.route('/api/friends/request', methods=['POST'])
+@login_required
+def send_friend_request():
+    me_id = session['user_id']
+    target_username = request.json.get('name')
+
+    target_user = User.get_by_username(target_username)
+    if not target_user:
+        return jsonify({"status": "error"}), 404
+
+    existing = FriendRequest.get_existing(me_id, target_user.id)
+    if existing:
+        return jsonify({"status": "error", "message": "Ya pendiente"}), 400
+
+    FriendRequest.create(me_id, target_user.id)
+    return jsonify({"status": "success"})
+
+
+# --- 6. CANCELAR SOLICITUD ---
+@friends_bp.route('/api/friends/cancel', methods=['POST'])
+@login_required
+def cancel_sent_request():
+    me_id = session['user_id']
+    target_username = request.json.get('name')
+    target_user = User.get_by_username(target_username)
+
+    if target_user:
+        req = FriendRequest.get_existing(me_id, target_user.id)
+        if req:
+            FriendRequest.reject(req['id'])  # Usar corchetes aquí también
+            return jsonify({"status": "success"})
+
+    return jsonify({"status": "error"}), 400
+
+
+# --- 7. ELIMINAR AMIGO (ROMPE LA AMISTAD) ---
 @friends_bp.route('/api/friends/remove', methods=['POST'])
 @login_required
 def remove_friend():
-    data = request.json
-    friend_name = data.get('name')
-    me = get_current_user()
+    me_id = session['user_id']
+    target_username = request.json.get('name')
 
-    friend = User.get_by_username(friend_name)
-    if friend:
-        FriendRequest.remove_friend(me.id, friend.id)
-        return jsonify({"status": "success", "msg": "Amigo eliminado"})
+    target_user = User.get_by_username(target_username)
 
-    return jsonify({"status": "error", "msg": "Usuario no encontrado"}), 404
+    if target_user:
+        # Usamos el método estático que ya tenías en user_model.py
+        # Esto borra la fila de la tabla 'friendship'
+        FriendRequest.remove_friend(me_id, target_user.id)
+
+        # Opcional: También podrías borrar la solicitud antigua 'accepted'
+        # para limpiar basura, pero con borrar la friendship es suficiente
+        # para que vuelva a salir en el buscador.
+
+        return jsonify({"status": "success", "msg": f"Eliminado amigo: {target_username}"})
+
+    return jsonify({"status": "error", "message": "Usuario no encontrado"}), 404

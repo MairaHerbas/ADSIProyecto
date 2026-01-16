@@ -16,3 +16,24 @@
     background-size: contain; background-repeat: no-repeat; background-position: center;
     opacity: 0.6;
 }
+
+/* Máscaras de Iconos con SVG (No requiere imágenes externas) */
+.btn-icon-mask {
+    width: 60%; height: 60%;
+    background-color: rgba(255, 255, 255, 0.9);
+    -webkit-mask-size: contain; mask-size: contain;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    -webkit-mask-position: center; mask-position: center;
+}
+
+/* Icono TICK (Aceptar) */
+.btn-accept .btn-icon-mask {
+    -webkit-mask-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>');
+    mask-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>');
+}
+
+/* Icono TRASH (Rechazar/Borrar) */
+.btn-reject .btn-icon-mask, .btn-remove-friend .btn-icon-mask {
+    -webkit-mask-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>');
+    mask-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>');
+}
