@@ -3,7 +3,8 @@ from flask import Blueprint, request, jsonify, session
 from app.utils import login_required
 from app.controller.model.team_model import Equipo, PokemonEquipo
 from app.controller.model.pokemon_model import Pokemon
-from app.services.services import ChangelogService
+# Importamos para filtrar capturados
+from app.controller.model.pokemon_db_controller import PokemonDBController
 
 team_bp = Blueprint('team', __name__)
 
@@ -12,27 +13,43 @@ team_bp = Blueprint('team', __name__)
 @team_bp.route('/api/team-edit-available', methods=['POST'])
 @login_required
 def team_edit_available():
-    # ... (Mismo código que ya tienes para listar pokemons) ...
+    user_id = session['user_id']
+
+    # 1. Todos los pokemons base
     pokemons = Pokemon.get_all()
-    available = [{"pokemon_id": dict(p)['id'], "name": dict(p)['nombre'], "sprite": dict(p)['imagen_url'],
-                  "type": dict(p)['tipos'].split(',')[0] if dict(p)['tipos'] else "Normal", "lvl": 1} for p in pokemons]
+
+    # 2. Capturados por el usuario
+    db_ctrl = PokemonDBController()
+    capturados_ids = db_ctrl.obtener_capturados(user_id)
+
+    # 3. Filtrar y construir JSON
+    available = []
+    for p in pokemons:
+        p_dict = dict(p)
+        # Solo añadimos si está capturado
+        if p_dict['id'] in capturados_ids:
+            # CORRECCIÓN AQUÍ: Usamos p_dict['imagen'] en lugar de ['imagen_url']
+            available.append({
+                "pokemon_id": p_dict['id'],
+                "name": p_dict['nombre'],
+                "sprite": p_dict['imagen'],
+                "type": p_dict['tipos'].split(',')[0] if p_dict['tipos'] else "Normal",
+                "lvl": 1
+            })
+
     return jsonify({"available": available})
 
 
-# --- CUMPLE PUNTO 4: Crear Equipo Vacío Inicial ---
+# --- CREAR EQUIPO VACÍO ---
 @team_bp.route('/api/team/init', methods=['POST'])
 @login_required
 def team_init():
     user_id = session['user_id']
-    # 1. Insertamos equipo vacío inmediatamente
-    # (Diagrama Secuencia: Crear -> Insertar Equipo Vacío)
     new_id = Equipo.create(user_id, "Nuevo Equipo")
-
-    # 2. Devolvemos el ID para que el frontend entre en modo edición
     return jsonify({"success": True, "id": new_id, "name": "Nuevo Equipo"})
 
 
-# --- CUMPLE PUNTO 3: Actualizaciones Inmediatas (Nombre) ---
+# --- ACTUALIZAR NOMBRE ---
 @team_bp.route('/api/team/set-name', methods=['POST'])
 @login_required
 def team_set_name():
@@ -41,7 +58,7 @@ def team_set_name():
     return jsonify({"success": True})
 
 
-# --- CUMPLE PUNTO 3 y 5: Añadir Miembro (Inmediato) ---
+# --- AÑADIR MIEMBRO ---
 @team_bp.route('/api/team/add-member', methods=['POST'])
 @login_required
 def team_add_member():
@@ -49,7 +66,6 @@ def team_add_member():
     team_id = data['team_id']
     poke_id = data['pokemon_id']
 
-    # Calculamos el orden (simulado, o podrías enviarlo desde front)
     current_members = Equipo.get_members(team_id)
     orden = len(current_members) + 1
 
@@ -60,20 +76,16 @@ def team_add_member():
     return jsonify({"success": True})
 
 
-# --- CUMPLE PUNTO 3: Quitar Miembro (Inmediato) ---
+# --- QUITAR MIEMBRO ---
 @team_bp.route('/api/team/remove-member', methods=['POST'])
 @login_required
 def team_remove_member():
     data = request.json
-    # Ojo: Aquí tu modelo necesita un delete específico por pokemon y equipo
-    # Para simplificar, asumimos que borras por ID de equipo y Pokemon,
-    # o idealmente por un ID único de la tabla intermedia si lo tuvieras.
-    # Usaremos una nueva función en el modelo:
     PokemonEquipo.delete_one(data['team_id'], data['pokemon_id'])
     return jsonify({"success": True})
 
 
-# --- ELIMINAR EQUIPO COMPLETO ---
+# --- ELIMINAR EQUIPO ---
 @team_bp.route('/api/team-delete', methods=['POST'])
 @login_required
 def team_delete():

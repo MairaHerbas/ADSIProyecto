@@ -81,14 +81,13 @@ export function loadTeamContent(team, contentArea, startEditing = false) {
     } else {
         renderTeamNameHeader(leftPanel, team);
         renderPokemonList(leftPanel, team.members || [], rightContentPanel, false);
-
         // 1. IR A EDITAR
         btnMain.onclick = () => {
-            // Recargamos el modal forzando modo edición
-            window.ModalSystem.open('team', team);
-            // Nota: Para que esto entre directo a editar, tu logic.js debería soportarlo
-            // O podemos llamar a enterEditMode manual:
-            // contentArea.innerHTML = ''; loadTeamContent(team, contentArea, true);
+            // CORRECCIÓN: No usamos window.ModalSystem.open porque eso fuerza el modo lectura (false).
+            // En su lugar, limpiamos el área y cargamos 'loadTeamContent' directamente con TRUE.
+
+            contentArea.innerHTML = '';
+            loadTeamContent(team, contentArea, true);
         };
 
         // 2. ELIMINAR (Confirmación UI sin alert)
@@ -144,7 +143,6 @@ async function enterEditMode(team, leftPanel, rightPanel, btnMain, btnSec, badge
 
     // 2. Fetch Disponible (Caja)
     try {
-        // NOTA: Asegúrate de que esta ruta existe en tu team_controller.py
         const res = await fetch('/api/team-edit-available', {
             method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({id: team.id})
@@ -158,15 +156,46 @@ async function enterEditMode(team, leftPanel, rightPanel, btnMain, btnSec, badge
 
         // 4. Render Derecha (Caja disponible)
         rightPanel.innerHTML = '';
-        renderPokemonList(rightPanel, data.available, null, true);
 
-        // 5. Drag & Drop INSTANTÁNEO (PUNTOS 3 y 5)
+        // [MODIFICADO] Pasamos una función callback para el click
+        renderPokemonList(rightPanel, data.available, null, true, (pk) => {
+            addMemberToTeamLogic(team, pk, leftPanel);
+        });
+
+        // 5. Drag & Drop INSTANTÁNEO
         setupDragAndDropInstantaneo(leftPanel, rightPanel, team);
 
     } catch (e) {
         console.error(e);
         rightPanel.innerHTML = '<div style="color:red; text-align:center">Error cargando caja</div>';
     }
+}
+
+// [NUEVO] Lógica centralizada para añadir miembro (usada por Click y Drag&Drop)
+async function addMemberToTeamLogic(team, pk, leftPanel) {
+    // Validar límite de 6
+    if ((team.members || []).length >= 6) {
+        triggerErrorShake(leftPanel);
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/team/add-member', {
+            method: 'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ team_id: team.id, pokemon_id: pk.pokemon_id })
+        });
+        const result = await res.json();
+
+        if(result.success) {
+            // Actualizar local
+            if(!team.members) team.members = [];
+            team.members.push(pk);
+            // Repintar izquierda
+            renderPokemonList(leftPanel, team.members, null, true);
+        } else {
+            alert("Error: " + result.error);
+        }
+    } catch(err) { console.error(err); }
 }
 
 // --- DRAG & DROP CON ACTUALIZACIÓN INMEDIATA ---
@@ -196,30 +225,8 @@ function setupDragAndDropInstantaneo(leftPanel, rightPanel, team) {
         if(!str) return;
 
         const pk = JSON.parse(str);
-        // Evitar duplicados si tu lógica no lo permite, o límite de 6
-        if ((team.members || []).length >= 6) {
-            triggerErrorShake(leftPanel);
-            return;
-        }
-
-        // LLAMADA AL BACKEND
-        try {
-            const res = await fetch('/api/team/add-member', {
-                method: 'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ team_id: team.id, pokemon_id: pk.pokemon_id })
-            });
-            const result = await res.json();
-
-            if(result.success) {
-                // Actualizar local
-                if(!team.members) team.members = [];
-                team.members.push(pk);
-                // Repintar
-                renderPokemonList(leftPanel, team.members, null, true);
-            } else {
-                alert("Error: " + result.error);
-            }
-        } catch(err) { console.error(err); }
+        // [MODIFICADO] Usamos la lógica centralizada
+        addMemberToTeamLogic(team, pk, leftPanel);
     });
 
     // DROP EN DERECHA: QUITAR DEL EQUIPO (BORRAR)
@@ -263,7 +270,7 @@ function renderTeamNameInput(container, team) {
     nameInput.style.fontSize = "1.5cqw";
     nameInput.style.marginBottom = "10px";
 
-    // GUARDADO AUTOMÁTICO DE NOMBRE (PUNTO 3)
+    // GUARDADO AUTOMÁTICO DE NOMBRE
     nameInput.addEventListener('blur', async () => {
         if(nameInput.value !== team.name) {
             await fetch('/api/team/set-name', {
@@ -295,7 +302,8 @@ async function deleteTeam(team) {
     } catch(e) { console.error(e); }
 }
 
-function renderPokemonList(container, pokemonList, detailViewContainer, isEditable) {
+// [MODIFICADO] Añadido parámetro onClickCallback
+function renderPokemonList(container, pokemonList, detailViewContainer, isEditable, onClickCallback = null) {
     let listWrapper = container.querySelector('.poke-list-container');
     if (!listWrapper) {
         listWrapper = document.createElement('div');
@@ -306,10 +314,11 @@ function renderPokemonList(container, pokemonList, detailViewContainer, isEditab
         listWrapper.innerHTML = '';
     }
     if (!pokemonList) return;
-    pokemonList.forEach(pk => createDraggableRow(pk, listWrapper, detailViewContainer, isEditable, container.id));
+    pokemonList.forEach(pk => createDraggableRow(pk, listWrapper, detailViewContainer, isEditable, container.id, onClickCallback));
 }
 
-function createDraggableRow(pk, parent, detailViewContainer, isEditable, containerId) {
+// [MODIFICADO] Añadido parámetro onClickCallback y evento click
+function createDraggableRow(pk, parent, detailViewContainer, isEditable, containerId, onClickCallback) {
     const row = document.createElement('div');
     row.className = 'poke-item-row';
     row.innerHTML = `<div class="pk-info-left"><span class="pk-name">${pk.name}</span><span class="pk-type">${pk.type||'Normal'}</span></div><div class="pk-info-right"><span class="pk-lvl">Nv. ${pk.lvl||'??'}</span><div class="pk-icon-ph"></div></div>`;
@@ -318,6 +327,13 @@ function createDraggableRow(pk, parent, detailViewContainer, isEditable, contain
         row.classList.add('draggable-item');
         row.draggable = true;
         row.dataset.pokemon = JSON.stringify(pk);
+
+        // Si hay callback de click (para la caja derecha), lo usamos
+        if (onClickCallback) {
+            row.style.cursor = "pointer";
+            row.title = "Clic para añadir al equipo";
+            row.onclick = () => onClickCallback(pk);
+        }
 
         row.addEventListener('dragstart', (e) => {
             row.classList.add('dragging');
