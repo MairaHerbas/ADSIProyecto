@@ -1,81 +1,59 @@
+:root {
+    --tl-bg: #f8f9fa;
+}
+
 .module-tl {
-    background-color: var(--color-tl);
-    
-    /* Layout Flex para alinear imagen y texto */
+    width: 100%; height: 100%;
+    background-color: var(--tl-bg);
+    border-radius: 20px 0 20px 0;
+    padding: 0.8rem;
+    display: flex; align-items: center; /* Centra verticalmente */
+}
+
+.trainer-card {
     display: flex;
-    flex-direction: row;
-    align-items: center; /* Centrado vertical perfecto */
-    
-    /* El padding crea el margen interno idéntico arriba, abajo e izquierda */
-    padding: var(--gap-size);
-    
-    /* Espacio entre la foto y el texto */
-    gap: var(--gap-size);
-}
-
-/* --- LOGICA DE LA IMAGEN --- */
-.tl-avatar-container {
-    height: 100%; /* Ocupa toda la altura disponible dentro del padding */
-    aspect-ratio: 1 / 1; /* Fuerza a que sea cuadrada */
-    flex-shrink: 0; /* Evita que la imagen se aplaste si falta espacio */
-}
-
-.tl-avatar-container img {
+    align-items: center;
+    gap: 15px;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%; /* Círculo perfecto */
-    display: block;
-    
-    /* Un borde sutil para que resalte sobre el color pastel */
-    border: calc(0.2 * var(--unit)) solid rgba(255,255,255,0.6);
 }
 
-/* --- LOGICA DEL TEXTO --- */
-.tl-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    /* Para que el texto largo no rompa el layout, usamos min-width 0 */
-    min-width: 0; 
-}
-
-#tl-username {
-    /* "Fuente estética donde todos los caracteres miden lo mismo" -> Monospace */
-    font-family: 'Courier New', Courier, monospace;
-    font-weight: 700;
-    
-    /* Color oscuro suave para contraste con pastel */
-    color: #4a4a4a;
-    
-    /* Tamaño reactivo al ancho del contenedor total */
-    font-size: 2cqw; 
-    line-height: 1.2;
-    
-    /* Puntos suspensivos si el nombre es larguísimo */
-    white-space: nowrap;
+/* AVATAR */
+.avatar-container {
+    width: 3.5cqw; height: 3.5cqw;
+    min-width: 50px; min-height: 50px;
+    border-radius: 50%;
     overflow: hidden;
-    text-overflow: ellipsis;
-    text-transform: uppercase;
-    letter-spacing: -0.05em;
+    border: 3px solid #3b4cca;
+    background: #fff;
+    flex-shrink: 0; cursor: pointer;
 }
+.avatar-container img { width: 100%; height: 100%; object-fit: cover; }
 
-#tl-stats {
+/* INFO */
+.trainer-info {
+    display: flex; flex-direction: column; gap: 4px;
     font-family: 'Courier New', Courier, monospace;
-    color: #666;
-    font-size: 1.2cqw; /* Más pequeño que el nombre */
-    margin-top: calc(0.5 * var(--unit));
+}
+.trainer-name { font-weight: bold; font-size: 1.2cqw; color: #333; text-transform: uppercase; }
+.xp-bar-container { width: 100px; height: 6px; background: #ddd; border-radius: 3px; overflow: hidden; }
+.xp-bar-fill { height: 100%; background: #3b4cca; width: 0%; transition: width 0.5s; }
+.level-badge { font-size: 0.9cqw; color: #666; font-weight: bold; }
+
+/* LOGOUT (A LA DERECHA DEL TODO) */
+.logout-wrapper {
+    margin-left: auto; /* <--- EL TRUCO MAGICO: Empuja a la derecha */
+    padding-left: 15px;
+    border-left: 2px solid #ddd; /* Separador sutil */
+    height: 70%; display: flex; align-items: center;
 }
 
-/* --- INTERACTIVIDAD (MODAL TRIGGER) --- */
-.tl-avatar-container, 
-#tl-username {
-    cursor: pointer;
-    transition: opacity 0.2s, transform 0.2s;
+.logout-btn {
+    width: 35px; height: 35px;
+    border-radius: 50%;
+    border: 2px solid #ff5555;
+    background: transparent; color: #ff5555;
+    font-size: 1.2rem; cursor: pointer;
+    display: flex; justify-content: center; align-items: center;
+    transition: all 0.2s;
 }
-
-.tl-avatar-container:hover, 
-#tl-username:hover {
-    opacity: 0.8;
-    transform: scale(1.02); /* Efecto sutil de "clicable" */
-}
+.logout-btn:hover { background: #ff5555; color: white; transform: scale(1.1); }

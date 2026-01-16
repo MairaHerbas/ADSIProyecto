@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Sistema Modular</title>
+    <title>Sistema Pokedex OS</title>
     <link rel="stylesheet" href="/static/css/variables.css">
     <link rel="stylesheet" href="/static/css/shell.css">
 </head>
@@ -10,20 +10,39 @@
 
     <main id="main-container">
         <div class="row-top">
-            <div id="wrapper-tl"></div> <div id="wrapper-tr"></div>
+            <div id="wrapper-tl"></div>
+            <div id="wrapper-tr"></div>
         </div>
 
         <div class="row-bottom">
-            <div id="wrapper-bl"></div> <div id="wrapper-br"></div>
+            <div id="wrapper-bl"></div>
+            <div id="wrapper-br"></div>
         </div>
     </main>
 
-    <div id="wrapper-modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <div id="modal-body"></div>
-        </div>
-    </div>
+    <div id="wrapper-modal"></div>
+
+    <script>
+        window.addEventListener('load', () => {
+            // Comprobamos cada 100ms si el sistema está listo
+            const securityCheck = setInterval(async () => {
+                if (window.ModalSystem) {
+                    clearInterval(securityCheck);
+
+                    try {
+                        const res = await fetch('/api/user-info');
+                        // Si da error 401/403, abrimos el candado
+                        if (res.status === 401 || res.status === 403) {
+                            console.warn("⛔ Bloqueando interfaz: Login requerido.");
+                            window.ModalSystem.open('auth');
+                        }
+                    } catch(e) {
+                        window.ModalSystem.open('auth');
+                    }
+                }
+            }, 100);
+        });
+    </script>
 
     <script src="/static/js/loader.js"></script>
 </body>

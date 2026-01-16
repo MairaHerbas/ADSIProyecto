@@ -70,7 +70,7 @@ def register():
 
 
 # --- API LOGOUT ---
-@auth_bp.route('/api/logout', methods=['POST', 'GET'])
+@auth_bp.route("/api/logout", methods=["POST"])
 def logout():
-    session.clear()
-    return jsonify({"success": True, "redirect": "/"})
+    session.clear() # Borra todos los datos de la sesión (id, role, etc.)
+    return jsonify({"success": True, "msg": "Sesión cerrada"})

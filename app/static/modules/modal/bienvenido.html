@@ -1,43 +1,55 @@
 <div class="modal-content auth-container">
-    <span class="close-modal">&times;</span>
+
+    <div class="auth-header">
+        <h2>Acceso Pokedex</h2>
+        <p>Identificación Requerida</p>
+    </div>
 
     <div id="login-section">
-        <h2>Bienvenido Entrenador</h2>
         <form id="form-login">
             <div class="form-group">
-                <label>Email</label>
+                <label>EMAIL DE ENTRENADOR</label>
                 <input type="email" id="login-email" required placeholder="ash@pokedex.com">
             </div>
             <div class="form-group">
-                <label>Contraseña</label>
+                <label>CLAVE DE ACCESO</label>
                 <input type="password" id="login-password" required>
             </div>
-            <button type="submit" class="btn-primary">Iniciar Sesión</button>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">ENTRAR AL SISTEMA</button>
+            </div>
         </form>
-        <p class="switch-msg">¿No tienes cuenta? <a href="#" id="btn-go-register">Regístrate aquí</a></p>
+
+        <div class="auth-footer">
+            <button id="btn-go-register" class="link-btn">¿Solicitar nueva licencia?</button>
+        </div>
     </div>
 
     <div id="register-section" style="display: none;">
-        <h2>Crear Licencia</h2>
         <form id="form-register">
             <div class="form-group">
-                <label>Nombre Entrenador</label>
+                <label>NOMBRE COMPLETO</label>
                 <input type="text" id="reg-name" required placeholder="Ash Ketchum">
             </div>
             <div class="form-group">
-                <label>Usuario (Nick)</label>
+                <label>ALIAS (NICK)</label>
                 <input type="text" id="reg-username" required placeholder="ash123">
             </div>
             <div class="form-group">
-                <label>Email</label>
+                <label>EMAIL</label>
                 <input type="email" id="reg-email" required>
             </div>
             <div class="form-group">
-                <label>Contraseña</label>
+                <label>CONTRASEÑA</label>
                 <input type="password" id="reg-password" required>
             </div>
-            <button type="submit" class="btn-success">Registrarse</button>
+            <div class="form-actions">
+                <button type="submit" class="btn-success">REGISTRAR LICENCIA</button>
+            </div>
         </form>
-        <p class="switch-msg">¿Ya tienes cuenta? <a href="#" id="btn-go-login">Inicia Sesión</a></p>
+
+        <div class="auth-footer">
+            <button id="btn-go-login" class="link-btn">Volver al acceso</button>
+        </div>
     </div>
 </div>

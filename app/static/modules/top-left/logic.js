@@ -1,54 +1,63 @@
 (async function() {
-    console.log("Iniciando Módulo Top-Left...");
+    console.log("Cargando Top-Left...");
 
-    const usernameEl = document.getElementById('tl-username');
-    const statsEl = document.getElementById('tl-stats');
-    const avatarEl = document.getElementById('tl-avatar');
-    const avatarContainer = document.querySelector('.tl-avatar-container');
-    
-    let currentData = null; // Guardamos datos locales para pasarlos al modal
+    try {
+        // 1. Obtener datos del usuario
+        const res = await fetch('/api/user-info');
+        if (!res.ok) return; // Si falla (no logueado), no hacemos nada
 
-    // --- FUNCIÓN DE ACTUALIZACIÓN ---
-    async function updateProfileView() {
-        try {
-            const response = await fetch('/api/user-info');
-            if (!response.ok) throw new Error('Error API');
-            
-            const data = await response.json();
-            currentData = data; // Actualizar cache local
+        const user = await res.json();
 
-            usernameEl.textContent = data.username;
-            statsEl.textContent = data.stats;
-            
-            if (data.avatar_url) {
-                // Truco para forzar recarga de imagen si la URL es la misma pero la imagen cambió
-                // (opcional, pero útil si cambias el avatar)
-                avatarEl.src = data.avatar_url; 
+        // 2. Rellenar HTML (Avatar, Nombre, Nivel, XP)
+        const nameEl = document.getElementById('tl-username');
+        const lvlEl = document.getElementById('tl-lvl-val');
+        const xpEl = document.getElementById('tl-xp-fill');
+        const avatarEl = document.getElementById('tl-avatar-img');
+
+        if(nameEl) nameEl.textContent = user.username;
+        if(lvlEl) lvlEl.textContent = user.level;
+
+        if(xpEl) {
+            const xpPercent = (user.xp / user.xp_next) * 100;
+            xpEl.style.width = `${xpPercent}%`;
+        }
+
+        // Cargar avatar personalizado si existe
+        if(avatarEl && user.avatar) {
+             // Si tienes sistema de avatares, aquí iría la URL correcta
+             // avatarEl.src = user.avatar;
+        }
+
+        // --- 3. EVENTOS DE CLIC (ABRIR PERFIL) ---
+        // Esto es lo que te faltaba:
+        const avatarBtn = document.getElementById('tl-avatar-btn');
+
+        // Función para abrir perfil
+        const openProfile = () => {
+            console.log("Abriendo perfil...");
+            if(window.ModalSystem) {
+                window.ModalSystem.open('profile');
+            } else {
+                console.error("El sistema modal no está listo.");
             }
+        };
 
-        } catch (error) {
-            console.error("Error Top-Left:", error);
-            usernameEl.textContent = "Error";
+        // Añadimos el evento a la foto y al nombre
+        if (avatarBtn) avatarBtn.addEventListener('click', openProfile);
+        if (nameEl) nameEl.addEventListener('click', openProfile);
+
+
+        // --- 4. LÓGICA DE LOGOUT (BOTÓN APAGAR) ---
+        const btnLogout = document.getElementById('btn-logout');
+        if (btnLogout) {
+            btnLogout.addEventListener('click', async (e) => {
+                e.stopPropagation(); // Evita que el click se propague
+                if(confirm("¿Cerrar sesión y salir?")) {
+                    await fetch('/api/logout', { method: 'POST' });
+                    window.location.reload();
+                }
+            });
         }
-    }
 
-    // 1. Carga Inicial
-    await updateProfileView();
-
-    // 2. Evento Click (Abre Modal)
-    const openProfile = () => {
-        if (window.ModalSystem) {
-            // Pasamos currentData actualizado
-            window.ModalSystem.open('profile', currentData);
-        }
-    };
-    if (avatarContainer) avatarContainer.addEventListener('click', openProfile);
-    if (usernameEl) usernameEl.addEventListener('click', openProfile);
-
-    // 3. NUEVO: ESCUCHAR ACTUALIZACIÓN GLOBAL
-    window.addEventListener('app-data-refresh', () => {
-        console.log("Refrescando Perfil...");
-        updateProfileView();
-    });
-
+    } catch (e) { console.error("Error en Top-Left:", e); }
 })();

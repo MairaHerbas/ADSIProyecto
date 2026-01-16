@@ -1,8 +1,45 @@
 <div id="modal-overlay" class="modal-overlay hidden">
-    <div id="modal-window" class="modal-window">
-        <button id="modal-close-btn" class="modal-close-btn">×</button>
 
-        <div id="modal-content" class="modal-content-area">
+    <div id="modal-content" class="modal-content-area"></div>
+
+    <template id="auth-template">
+        <div class="modal-content auth-container">
+            <div class="auth-header">
+                <h2>Acceso Pokedex</h2>
+                <p>Sistema de Seguridad</p>
             </div>
-    </div>
+
+            <div id="login-section">
+                <form id="form-login">
+                    <div class="form-group">
+                        <label>EMAIL</label>
+                        <input type="email" id="login-email" required placeholder="entrenador@pkmn.com">
+                    </div>
+                    <div class="form-group">
+                        <label>CLAVE</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">ENTRAR</button>
+                    </div>
+                </form>
+                <div class="auth-footer">
+                    <button id="btn-go-register" class="link-btn">Crear Cuenta</button>
+                </div>
+            </div>
+
+            <div id="register-section" style="display: none;">
+                <form id="form-register">
+                    <div class="form-group"><label>NOMBRE</label><input type="text" id="reg-name" required></div>
+                    <div class="form-group"><label>USUARIO</label><input type="text" id="reg-username" required></div>
+                    <div class="form-group"><label>EMAIL</label><input type="email" id="reg-email" required></div>
+                    <div class="form-group"><label>CLAVE</label><input type="password" id="reg-password" required></div>
+                    <div class="form-actions"><button type="submit" class="btn-success">REGISTRAR</button></div>
+                </form>
+                <div class="auth-footer">
+                    <button id="btn-go-login" class="link-btn">Volver</button>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>
