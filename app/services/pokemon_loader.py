@@ -14,8 +14,20 @@ class PokemonLoader:
         self.api_url = "https://pokeapi.co/api/v2/pokemon/"
 
     def _conectar(self):
+        directorio = os.path.dirname(DB_PATH)
+
+
+        if directorio and not os.path.exists(directorio):
+            try:
+                os.makedirs(directorio)
+                print(f"Directorio creado: {directorio}")
+            except OSError as e:
+                print(f"Error al crear el directorio: {e}")
+                raise
+
+
+
         conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row  # Permite llamar columnas por nombre
         return conn
 
     def inicializar_db(self):
