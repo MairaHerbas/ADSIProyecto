@@ -149,8 +149,8 @@ def create_default_admin():
         print("--- CREANDO SUPER ADMIN ---")
         # NOTA: Asegúrate de que User.create en user_model.py acepte 'role' y 'status'
         User.create(
-            name="Administrador Sistema",
-            username="admin",
+            name="Cinthia",
+            username="Cinthia",
             email="admin@demo.com",
             password="admin123",
             role="admin",  # ROL IMPORTANTE
