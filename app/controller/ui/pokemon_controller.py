@@ -69,6 +69,8 @@ def get_pokedex():
             "types": tipos_list,
             "generation": p['generacion'],
             # Agrupamos las estadísticas para que queden ordenadas en el JSON
+            "habilidades": p['habilidades'],
+            "movimientos": p['movimientos'],
             "stats": {
                 "hp": p['hp'],
                 "atk": p['ataque'],

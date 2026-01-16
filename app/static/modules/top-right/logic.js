@@ -8,46 +8,34 @@
 
     if(btnOpen) {
         btnOpen.addEventListener('click', abrirVentanaFlotante);
-    } else {
-        console.error("Botón Pokedex no encontrado.");
     }
 
     function abrirVentanaFlotante() {
         if(document.getElementById('fake-modal-pokedex')) return;
 
-        // 1. Crear Overlay
         const overlay = document.createElement('div');
         overlay.id = 'fake-modal-pokedex';
         overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:99999; display:flex; justify-content:center; align-items:center;";
 
-        // 2. Crear Caja Principal
         const box = document.createElement('div');
         box.className = 'modal-body';
         box.style.cssText = "width:95%; max-width:1100px; height:85%; background:#2b2b2b; border-radius:10px; overflow:hidden; position:relative; box-shadow:0 0 50px rgba(0,0,0,1); border: 1px solid #444; display:flex; flex-direction:column;";
 
-        // 3. FIX BOTÓN CERRAR: Creado independientemente y añadido al final
         const closeBtn = document.createElement('div');
         closeBtn.innerText = "×";
         closeBtn.style.cssText = "position:absolute; top:10px; right:20px; color:#aaa; font-size:40px; font-weight:bold; cursor:pointer; z-index:100000; line-height:0.8; height:40px; width:40px; text-align:center;";
         closeBtn.onmouseover = () => closeBtn.style.color = "white";
         closeBtn.onmouseout = () => closeBtn.style.color = "#aaa";
+        closeBtn.onclick = (e) => { e.stopPropagation(); document.body.removeChild(overlay); };
 
-        // Evento directo al botón
-        closeBtn.onclick = function(e) {
-            e.stopPropagation(); // Evita que el clic traspase
-            document.body.removeChild(overlay);
-        };
-
-        // Montamos el DOM
         overlay.appendChild(box);
-        overlay.appendChild(closeBtn); // La X está fuera de la caja para asegurar clic, o dentro pero con z-index alto
+        overlay.appendChild(closeBtn);
         document.body.appendChild(overlay);
 
         iniciarInterfaz(box);
     }
 
     function iniciarInterfaz(container) {
-        // Generar opciones de los selects
         const opsTipos = TIPOS.map(t => `<option value="${t}">${t.toUpperCase()}</option>`).join('');
         const opsGens = GENS.map(g => `<option value="${g}">${g}</option>`).join('');
 
@@ -55,25 +43,13 @@
             <div class="dex-container">
                 <div class="dex-sidebar">
                     <div class="dex-title">POKÉDEX NACIONAL</div>
-
                     <input type="text" id="dex-filter-name" class="dex-input" placeholder="Buscar Nombre..." autocomplete="off">
-
                     <div class="filter-group">
-                        <select id="dex-filter-gen" class="dex-select">
-                            <option value="">TODAS GEN</option>
-                            ${opsGens}
-                        </select>
-                        <select id="dex-filter-type" class="dex-select">
-                            <option value="">TODOS TIPOS</option>
-                            ${opsTipos}
-                        </select>
+                        <select id="dex-filter-gen" class="dex-select"><option value="">TODAS GEN</option>${opsGens}</select>
+                        <select id="dex-filter-type" class="dex-select"><option value="">TODOS TIPOS</option>${opsTipos}</select>
                     </div>
-
-                    <div id="dex-list" class="dex-list">
-                        <div style="padding:20px; text-align:center; color:#666;">Cargando...</div>
-                    </div>
+                    <div id="dex-list" class="dex-list"><div style="padding:20px; text-align:center; color:#666;">Cargando...</div></div>
                 </div>
-
                 <div class="dex-main" id="dex-detail">
                     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#555;">
                         <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" style="width:100px; opacity:0.1; filter:grayscale(1);">
@@ -83,12 +59,8 @@
             </div>
         `;
 
-        // Asignar eventos de filtrado a los 3 inputs
         const inputs = ['dex-filter-name', 'dex-filter-gen', 'dex-filter-type'];
-        inputs.forEach(id => {
-            document.getElementById(id).addEventListener('input', aplicarFiltros);
-        });
-
+        inputs.forEach(id => document.getElementById(id).addEventListener('input', aplicarFiltros));
         cargarDatos();
     }
 
@@ -97,7 +69,6 @@
             const res = await fetch('/api/pokedex');
             if(!res.ok) throw new Error("Error API");
             const data = await res.json();
-
             pokemonsCache = data;
             renderizarLista(data);
         } catch (e) {
@@ -115,16 +86,11 @@
             return;
         }
 
-        // Renderizado limitado a 50 para máxima velocidad al escribir
         const visibleList = lista.slice(0, 50);
 
         visibleList.forEach(poke => {
             const item = document.createElement('div');
             item.className = 'dex-item';
-
-            // Icono de tipo pequeño
-            const tipoPrincipal = poke.types[0];
-
             item.innerHTML = `
                 <div style="display:flex; align-items:center; gap:10px;">
                     <img src="${poke.sprite}" style="width:30px; height:30px;">
@@ -135,13 +101,11 @@
                 </div>
                 <div class="fake-toggle ${poke.owned ? 'owned' : ''}"></div>
             `;
-
             item.onclick = () => {
                 document.querySelectorAll('.dex-item').forEach(el => el.classList.remove('active'));
                 item.classList.add('active');
                 mostrarDetalleCompleto(poke);
             };
-
             listContainer.appendChild(item);
         });
     }
@@ -157,15 +121,13 @@
             const matchType = txtType === "" || p.types.includes(txtType);
             return matchName && matchGen && matchType;
         });
-
         renderizarLista(filtrados);
     }
 
-    // --- NUEVA VISTA DETALLADA COMPLETA ---
+    // --- FUNCIÓN DE DETALLE MEJORADA ---
     function mostrarDetalleCompleto(poke) {
         const container = document.getElementById('dex-detail');
 
-        // Mapa de colores
         const typeColors = {
             fire: '#F08030', water: '#6890F0', grass: '#78C850', electric: '#F8D030',
             ice: '#98D8D8', fighting: '#C03028', poison: '#A040A0', ground: '#E0C068',
@@ -175,17 +137,12 @@
         };
         const mainColor = typeColors[poke.types[0]] || '#aaa';
 
-        // Preparamos habilidades (vienen separadas por comas)
         const abilitiesHtml = poke.habilidades ? poke.habilidades.split(',').map(h =>
             `<span class="tag">${h}</span>`
         ).join('') : '<span style="color:#666">Desconocidas</span>';
 
-        // Preparamos movimientos (mostramos los primeros 10)
-        const movesList = poke.movimientos ? poke.movimientos.split(',') : [];
-        const movesHtml = movesList.length > 0 ? movesList.slice(0, 12).map(m =>
-            `<span class="tag" style="border-color:#444; background:#222;">${m}</span>`
-        ).join('') + (movesList.length > 12 ? `<span class="tag" style="color:#888">+${movesList.length - 12} más</span>` : '')
-        : 'Sin datos';
+        // Preparamos la lista de movimientos (Array)
+        const movesArray = poke.movimientos ? poke.movimientos.split(',') : [];
 
         container.innerHTML = `
             <div class="detail-header">
@@ -193,7 +150,6 @@
                 <div style="margin-top:10px;">
                     ${poke.types.map(t => `<span class="tag" style="background:${typeColors[t]}; color:white; border:none; padding:5px 15px; font-weight:bold; text-transform:uppercase;">${t}</span>`).join('')}
                 </div>
-
                 <img src="${poke.sprite}" class="detail-img-lg">
             </div>
 
@@ -215,19 +171,58 @@
                         <span style="color:#aaa; display:block; font-size:0.75rem;">Generación</span>
                         <span style="font-size:1.1rem;">${poke.generation}</span>
                     </div>
-
                     <div class="info-title" style="margin-top:10px;">Habilidades</div>
                     <div style="line-height:1.5;">${abilitiesHtml}</div>
                 </div>
 
                 <div class="info-card" style="grid-column: span 2;">
-                    <div class="info-title">Movimientos Principales</div>
-                    <div style="display:flex; flex-wrap:wrap; gap:5px;">
-                        ${movesHtml}
-                    </div>
+                    <div class="info-title">Movimientos (${movesArray.length})</div>
+                    <div id="moves-container" style="display:flex; flex-wrap:wrap; gap:5px;">
+                        </div>
                 </div>
             </div>
         `;
+
+        // --- LÓGICA DEL BOTÓN "VER MÁS" ---
+        // Definimos una función interna para pintar los movimientos
+        const renderMoves = (showAll) => {
+            const movesBox = document.getElementById('moves-container');
+            if(!movesBox) return;
+
+            if(movesArray.length === 0) {
+                movesBox.innerHTML = '<span style="color:#666">Sin datos</span>';
+                return;
+            }
+
+            const LIMIT = 18; // Mostramos 18 al principio
+            const listToShow = showAll ? movesArray : movesArray.slice(0, LIMIT);
+
+            let html = listToShow.map(m =>
+                `<span class="tag" style="border-color:#444; background:#222;">${m}</span>`
+            ).join('');
+
+            // Si hay más de 18, mostramos el botón
+            if(!showAll && movesArray.length > LIMIT) {
+                const restante = movesArray.length - LIMIT;
+                // Botón "+ X MÁS"
+                html += `<span id="btn-show-moves" class="tag" style="background:#444; color:white; cursor:pointer; border:1px solid #777; font-weight:bold;">+${restante} MÁS...</span>`;
+            } else if (showAll && movesArray.length > LIMIT) {
+                // Botón "VER MENOS"
+                html += `<span id="btn-hide-moves" class="tag" style="background:#444; color:#aaa; cursor:pointer; border:1px solid #777;">VER MENOS</span>`;
+            }
+
+            movesBox.innerHTML = html;
+
+            // Asignar eventos a los botones recién creados
+            const btnShow = document.getElementById('btn-show-moves');
+            if(btnShow) btnShow.onclick = () => renderMoves(true);
+
+            const btnHide = document.getElementById('btn-hide-moves');
+            if(btnHide) btnHide.onclick = () => renderMoves(false);
+        };
+
+        // Pintamos la lista inicial (contraída)
+        renderMoves(false);
     }
 
     function crearBarra(lbl, val, col) {
