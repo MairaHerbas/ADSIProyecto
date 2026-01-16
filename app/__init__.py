@@ -8,6 +8,8 @@ from app.controller.ui.pokemon_controller import pokemon_bp
 from app.controller.ui.friends import friends_bp
 from app.controller.ui.main import main_bp
 from app.controller.ui.admin import admin_bp
+from app.controller.ui.team_controller import team_bp
+
 from app.controller.ui.routes_changelog import changelog_bp
 
 # Importar Loader
@@ -72,7 +74,6 @@ def init_tables():
     """)
 
     # Tabla POKEMON_EQUIPO
-    # Nota: Esta tabla referencia a 'pokemons', por eso cargamos el loader antes.
     db.insert("""
     CREATE TABLE IF NOT EXISTS pokemon_equipo (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

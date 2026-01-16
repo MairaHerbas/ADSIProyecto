@@ -70,13 +70,40 @@ class User:
 
 
 # --- CLASE EVENT (Esta es la que te faltaba) ---
+# --- CLASE EVENT (Actualizada) ---
 class Event:
+    def __init__(self, id, user_id, event_type, description, created_at):
+        self.id = id
+        self.user_id = user_id
+        self.event_type = event_type
+        self.description = description
+        self.created_at = created_at
+
     @staticmethod
     def create(user_id, event_type, description):
         created_at = datetime.utcnow()
         sql = "INSERT INTO event (user_id, event_type, description, created_at) VALUES (?, ?, ?, ?)"
         db.insert(sql, (user_id, event_type, description, created_at))
 
+    @staticmethod
+    def get_recent_by_users(user_ids_list, limit=50):
+        if not user_ids_list:
+            return []
+
+        # Crear placeholders dinámicos (?, ?, ?) según cantidad de IDs
+        placeholders = ','.join(['?'] * len(user_ids_list))
+        sql = f"""
+            SELECT * FROM event 
+            WHERE user_id IN ({placeholders}) 
+            ORDER BY created_at DESC 
+            LIMIT ?
+        """
+        # Añadimos el límite al final de los argumentos
+        args = list(user_ids_list) + [limit]
+
+        rows = db.select(sql, tuple(args))
+        # Devolvemos objetos Event para que el HTML los entienda (event.description)
+        return [Event(**dict(r)) for r in rows]
 
 # --- CLASE FRIEND REQUEST ---
 class FriendRequest:

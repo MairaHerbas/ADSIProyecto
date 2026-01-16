@@ -1,7 +1,10 @@
 from flask import Blueprint, request, jsonify, session
 from datetime import datetime
 from app.database.connection import db
-from app.controller.model.pokemon_model import Equipo, Pokemon, PokemonEquipo
+# app/controller/ui/pokemon_controller.py
+from app.controller.model.pokemon_model import Pokemon
+
+from app.controller.model.team_model import Equipo, PokemonEquipo
 from app.controller.model.user_model import Event
 from app.utils import login_required
 
@@ -76,10 +79,3 @@ def add_to_pokedex():
     # aquí devolvemos éxito simulado o podríamos crear una tabla 'Caja' en el futuro.
     return jsonify({"success": True, "msg": "Pokemon registrado (Simulación)"})
 
-
-# --- API: DISPONIBLES (CAJA PARA EDITAR EQUIPO) ---
-@pokemon_bp.route('/api/team-edit-available', methods=['POST'])
-@login_required
-def team_edit_available():
-    pokemons = Pokemon.get_all()
-    # Formato simplificado para la caja

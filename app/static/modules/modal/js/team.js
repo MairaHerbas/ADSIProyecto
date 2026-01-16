@@ -1,11 +1,19 @@
+// app/static/modules/modal/js/team.js
+
 export function loadTeamContent(team, contentArea, startEditing = false) {
+    // --- LÓGICA PUNTO 4: SI ES UN EQUIPO NUEVO (NO TIENE ID), CREARLO PRIMERO ---
+    if (startEditing && !team.id) {
+        createEmptyTeamAndRedirect(contentArea);
+        return; // Detenemos aquí, la función se volverá a llamar cuando tengamos ID
+    }
+
     const container = document.createElement('div');
     container.className = 'team-view-container';
 
     // Header Badge
     const badge = document.createElement('div');
     badge.className = 'team-header-badge';
-    badge.textContent = startEditing ? "CREAR EQUIPO" : "CONSULTAR EQUIPO"; 
+    badge.textContent = startEditing ? "EDITANDO EQUIPO" : "CONSULTAR EQUIPO";
     container.appendChild(badge);
 
     // Grid Wrapper
@@ -25,14 +33,13 @@ export function loadTeamContent(team, contentArea, startEditing = false) {
 
     const btnMain = document.createElement('button');
     btnMain.className = 'btn-main-action';
-    
+
     const btnSec = document.createElement('button');
     btnSec.className = 'btn-sec-action';
 
-    // Configuración inicial de botones
     if (startEditing) {
-        btnMain.textContent = "CREAR";
-        btnSec.textContent = "CANCELAR";
+        btnMain.textContent = "TERMINAR"; // Ya no es "Guardar", porque se guarda solo
+        btnSec.style.display = 'none';    // No hay cancelar
     } else {
         btnMain.textContent = "EDITAR EQUIPO";
         btnSec.textContent = "ELIMINAR";
@@ -48,9 +55,9 @@ export function loadTeamContent(team, contentArea, startEditing = false) {
     rightCol.className = 'team-col-right';
 
     const rightContentPanel = document.createElement('div');
-    rightContentPanel.className = 'team-panel-tr'; 
+    rightContentPanel.className = 'team-panel-tr';
     rightContentPanel.id = 'panel-available';
-    
+
     if (startEditing) {
         rightContentPanel.innerHTML = '<div style="padding:20px; text-align:center;">Cargando caja...</div>';
     } else {
@@ -68,21 +75,26 @@ export function loadTeamContent(team, contentArea, startEditing = false) {
 
     // --- LÓGICA DE FLUJO ---
     if (startEditing) {
-        renderTeamNameHeader(leftPanel, team);
+        // En modo edición pasamos el OBJETO team completo
+        renderTeamNameInput(leftPanel, team);
         enterEditMode(team, leftPanel, rightContentPanel, btnMain, btnSec, badge);
     } else {
-        renderTeamNameHeader(leftPanel, team); 
+        renderTeamNameHeader(leftPanel, team);
         renderPokemonList(leftPanel, team.members || [], rightContentPanel, false);
 
-        // 1. EDITAR
+        // 1. IR A EDITAR
         btnMain.onclick = () => {
-            enterEditMode(team, leftPanel, rightContentPanel, btnMain, btnSec, badge);
+            // Recargamos el modal forzando modo edición
+            window.ModalSystem.open('team', team);
+            // Nota: Para que esto entre directo a editar, tu logic.js debería soportarlo
+            // O podemos llamar a enterEditMode manual:
+            // contentArea.innerHTML = ''; loadTeamContent(team, contentArea, true);
         };
 
         // 2. ELIMINAR (Confirmación UI sin alert)
         let confirmState = false;
         let timeout;
-        
+
         btnSec.onclick = () => {
             if (!confirmState) {
                 confirmState = true;
@@ -101,65 +113,55 @@ export function loadTeamContent(team, contentArea, startEditing = false) {
     }
 }
 
+// --- FUNCIÓN AUXILIAR: CREAR EQUIPO VACÍO (PUNTO 4) ---
+async function createEmptyTeamAndRedirect(contentArea) {
+    contentArea.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100%;font-size:1.2em;">Creando equipo en base de datos...</div>';
+    try {
+        const res = await fetch('/api/team/init', {method: 'POST'});
+        const data = await res.json();
+        if(data.success) {
+            // El backend nos devuelve el ID nuevo.
+            const newTeam = { id: data.id, name: data.name, members: [] };
+            // Volvemos a cargar la vista, pero ahora ya tenemos ID, así que entrará en la lógica normal de edición
+            loadTeamContent(newTeam, contentArea, true);
+        } else {
+            contentArea.innerHTML = '<div style="color:red">Error al inicializar equipo.</div>';
+        }
+    } catch(e) {
+        console.error(e);
+        contentArea.innerHTML = '<div style="color:red">Error de conexión.</div>';
+    }
+}
+
 // --- MODO EDICIÓN ---
 async function enterEditMode(team, leftPanel, rightPanel, btnMain, btnSec, badge) {
-    const isNew = (team.id === null);
-
     // 1. UI Updates
-    badge.textContent = isNew ? "NUEVO EQUIPO" : "EDITANDO EQUIPO";
+    badge.textContent = "EDITANDO EQUIPO";
     badge.style.color = "var(--dp-success)";
-    
-    btnMain.textContent = isNew ? "CREAR" : "GUARDAR CAMBIOS";
-    btnMain.classList.add('saving');
-    
-    // Override Cancelar para evitar borrado
-    btnSec.onclick = null; 
-    btnSec.textContent = "CANCELAR";
-    btnSec.classList.remove('confirm-state');
-    btnSec.onclick = () => {
-        if(isNew) window.ModalSystem.close(); 
-        else window.ModalSystem.open('team', team); 
-    };
 
-    // 2. Input Nombre
-    const nameWrapper = leftPanel.querySelector('.team-name-wrapper');
-    if(nameWrapper) nameWrapper.remove(); // Eliminamos el wrapper antiguo
-    
-    const nameInput = document.createElement('input');
-    nameInput.type = 'text';
-    nameInput.className = 'edit-input';
-    nameInput.placeholder = "NOMBRE DEL EQUIPO...";
-    nameInput.value = team.name;
-    nameInput.style.fontSize = "1.5cqw";
-    nameInput.style.marginBottom = "10px";
-    
-    leftPanel.prepend(nameInput);
+    // Botón "TERMINAR" simplemente cierra el modal
+    btnMain.onclick = () => window.ModalSystem.close();
 
-    // 3. Fetch Disponible
+    // 2. Fetch Disponible (Caja)
     try {
+        // NOTA: Asegúrate de que esta ruta existe en tu team_controller.py
         const res = await fetch('/api/team-edit-available', {
             method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({id: team.id})
         });
         const data = await res.json();
 
-        // 4. Render Izquierda
+        // 3. Render Izquierda (Miembros actuales del equipo)
         const oldList = leftPanel.querySelector('.poke-list-container');
         if(oldList) oldList.remove();
-        
-        // Simplemente añadimos al final del panel (ya no hay botones dentro)
         renderPokemonList(leftPanel, team.members, null, true);
 
-        // 5. Render Derecha
+        // 4. Render Derecha (Caja disponible)
         rightPanel.innerHTML = '';
         renderPokemonList(rightPanel, data.available, null, true);
 
-        // 6. Drag & Drop
-        setupDragAndDrop(leftPanel, rightPanel);
-
-        // 7. Acción Guardar
-        btnMain.onclick = () => handleSaveAction(team, leftPanel, btnMain, nameInput.value, isNew);
-        nameInput.addEventListener('input', (e) => team.name = e.target.value);
+        // 5. Drag & Drop INSTANTÁNEO (PUNTOS 3 y 5)
+        setupDragAndDropInstantaneo(leftPanel, rightPanel, team);
 
     } catch (e) {
         console.error(e);
@@ -167,73 +169,119 @@ async function enterEditMode(team, leftPanel, rightPanel, btnMain, btnSec, badge
     }
 }
 
-// --- GUARDAR ---
-async function handleSaveAction(team, leftPanel, saveBtn, currentNameInputVal, isNew) {
-    const currentList = getPokemonDataFromDOM(leftPanel);
-    const finalName = currentNameInputVal || team.name;
+// --- DRAG & DROP CON ACTUALIZACIÓN INMEDIATA ---
+function setupDragAndDropInstantaneo(leftPanel, rightPanel, team) {
+    leftPanel.dataset.dropMsg = "AÑADIR";
+    leftPanel.dataset.errorMsg = "¡LLENO!";
+    rightPanel.dataset.dropMsg = "QUITAR";
 
-    if (!finalName || !finalName.trim()) {
-        triggerErrorShake(saveBtn);
-        const t = saveBtn.textContent;
-        saveBtn.textContent = "¡FALTA NOMBRE!";
-        setTimeout(() => saveBtn.textContent = t, 1500);
-        return;
-    }
-
-    if (currentList.length === 0) {
-        triggerErrorShake(saveBtn);
-        const t = saveBtn.textContent;
-        saveBtn.textContent = "¡EQUIPO VACÍO!";
-        setTimeout(() => saveBtn.textContent = t, 1500);
-        return;
-    }
-
-    const originalText = saveBtn.textContent;
-    saveBtn.textContent = isNew ? "CREANDO..." : "GUARDANDO...";
-    saveBtn.disabled = true;
-
-    const endpoint = isNew ? '/api/team-create' : '/api/team-update';
-
-    try {
-        const res = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                id: team.id,
-                name: finalName,
-                members: currentList
-            })
+    [leftPanel, rightPanel].forEach(panel => {
+        panel.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if(panel.classList.contains('drop-error')) return;
+            panel.classList.add('drop-active');
         });
+        panel.addEventListener('dragleave', (e) => {
+            if(e.relatedTarget && panel.contains(e.relatedTarget)) return;
+            panel.classList.remove('drop-active');
+            panel.classList.remove('drop-error');
+        });
+    });
 
-        const result = await res.json();
+    // DROP EN IZQUIERDA: AÑADIR AL EQUIPO
+    leftPanel.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        leftPanel.classList.remove('drop-active');
+        const str = e.dataTransfer.getData('application/json');
+        if(!str) return;
 
-        if (result.success) {
-            Object.assign(team, result.team || {}); 
-            if(!isNew) {
-                team.name = result.newName;
-                team.members = result.members;
-            }
-
-            saveBtn.textContent = "¡ÉXITO!";
-            saveBtn.style.backgroundColor = "var(--dp-success)";
-            
-            setTimeout(() => {
-                if(isNew) window.ModalSystem.close();
-                else window.ModalSystem.open('team', team);
-            }, 800);
-        } else {
-            throw new Error(result.error);
+        const pk = JSON.parse(str);
+        // Evitar duplicados si tu lógica no lo permite, o límite de 6
+        if ((team.members || []).length >= 6) {
+            triggerErrorShake(leftPanel);
+            return;
         }
 
-    } catch (e) {
-        console.error(e);
-        triggerErrorShake(saveBtn);
-        saveBtn.textContent = "ERROR";
-        setTimeout(() => {
-            saveBtn.textContent = originalText;
-            saveBtn.disabled = false;
-        }, 1500);
-    }
+        // LLAMADA AL BACKEND
+        try {
+            const res = await fetch('/api/team/add-member', {
+                method: 'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ team_id: team.id, pokemon_id: pk.pokemon_id })
+            });
+            const result = await res.json();
+
+            if(result.success) {
+                // Actualizar local
+                if(!team.members) team.members = [];
+                team.members.push(pk);
+                // Repintar
+                renderPokemonList(leftPanel, team.members, null, true);
+            } else {
+                alert("Error: " + result.error);
+            }
+        } catch(err) { console.error(err); }
+    });
+
+    // DROP EN DERECHA: QUITAR DEL EQUIPO (BORRAR)
+    rightPanel.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        rightPanel.classList.remove('drop-active');
+
+        const sourceId = e.dataTransfer.getData('source-id');
+        const str = e.dataTransfer.getData('application/json');
+
+        // Solo borramos si viene del panel izquierdo ('panel-team-members')
+        if (sourceId === 'panel-team-members' && str) {
+            const pk = JSON.parse(str);
+            try {
+                const res = await fetch('/api/team/remove-member', {
+                    method: 'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ team_id: team.id, pokemon_id: pk.pokemon_id })
+                });
+                const result = await res.json();
+
+                if(result.success) {
+                    // Actualizar local: Filtramos el que coincida
+                    team.members = team.members.filter(m => m.pokemon_id !== pk.pokemon_id);
+                    renderPokemonList(leftPanel, team.members, null, true);
+                }
+            } catch(err) { console.error(err); }
+        }
+    });
+}
+
+// --- UI HELPERS ---
+function renderTeamNameInput(container, team) {
+    const nameWrapper = container.querySelector('.team-name-wrapper');
+    if(nameWrapper) nameWrapper.remove();
+
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'edit-input';
+    nameInput.placeholder = "NOMBRE DEL EQUIPO...";
+    nameInput.value = team.name;
+    nameInput.style.fontSize = "1.5cqw";
+    nameInput.style.marginBottom = "10px";
+
+    // GUARDADO AUTOMÁTICO DE NOMBRE (PUNTO 3)
+    nameInput.addEventListener('blur', async () => {
+        if(nameInput.value !== team.name) {
+            await fetch('/api/team/set-name', {
+                method: 'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({id: team.id, name: nameInput.value})
+            });
+            team.name = nameInput.value;
+        }
+    });
+
+    container.prepend(nameInput);
+}
+
+function renderTeamNameHeader(c, t) {
+    const w=document.createElement('div');
+    w.className='team-name-wrapper';
+    w.innerHTML=`<div class="name-row"><span class="team-name-text">${t.name}</span></div>`;
+    c.appendChild(w);
 }
 
 async function deleteTeam(team) {
@@ -265,37 +313,48 @@ function createDraggableRow(pk, parent, detailViewContainer, isEditable, contain
     const row = document.createElement('div');
     row.className = 'poke-item-row';
     row.innerHTML = `<div class="pk-info-left"><span class="pk-name">${pk.name}</span><span class="pk-type">${pk.type||'Normal'}</span></div><div class="pk-info-right"><span class="pk-lvl">Nv. ${pk.lvl||'??'}</span><div class="pk-icon-ph"></div></div>`;
+
     if (isEditable) {
-        row.classList.add('draggable-item'); row.draggable = true; row.dataset.pokemon = JSON.stringify(pk);
-        row.addEventListener('dragstart', (e) => { row.classList.add('dragging'); e.dataTransfer.setData('application/json', JSON.stringify(pk)); e.dataTransfer.setData('source-id', containerId); e.dataTransfer.effectAllowed = 'move'; });
-        row.addEventListener('dragend', () => { row.classList.remove('dragging'); document.querySelectorAll('.drop-active').forEach(e=>e.classList.remove('drop-active')); document.querySelectorAll('.drop-error').forEach(e=>e.classList.remove('drop-error')); });
+        row.classList.add('draggable-item');
+        row.draggable = true;
+        row.dataset.pokemon = JSON.stringify(pk);
+
+        row.addEventListener('dragstart', (e) => {
+            row.classList.add('dragging');
+            e.dataTransfer.setData('application/json', JSON.stringify(pk));
+            e.dataTransfer.setData('source-id', containerId);
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        row.addEventListener('dragend', () => {
+            row.classList.remove('dragging');
+            document.querySelectorAll('.drop-active').forEach(e=>e.classList.remove('drop-active'));
+            document.querySelectorAll('.drop-error').forEach(e=>e.classList.remove('drop-error'));
+        });
     } else if (detailViewContainer) {
-        row.onclick = () => { parent.querySelectorAll('.poke-item-row').forEach(r=>r.classList.remove('selected')); row.classList.add('selected'); renderPokemonDetails(pk, detailViewContainer); };
+        row.onclick = () => {
+            parent.querySelectorAll('.poke-item-row').forEach(r=>r.classList.remove('selected'));
+            row.classList.add('selected');
+            renderPokemonDetails(pk, detailViewContainer);
+        };
     }
     parent.appendChild(row);
 }
 
-function setupDragAndDrop(leftPanel, rightPanel) {
-    leftPanel.dataset.dropMsg = "AÑADIR"; leftPanel.dataset.errorMsg = "¡LLENO!"; rightPanel.dataset.dropMsg = "QUITAR";
-    [leftPanel, rightPanel].forEach(panel => {
-        panel.addEventListener('dragover', (e) => { e.preventDefault(); if(panel.classList.contains('drop-error')) return; panel.classList.add('drop-active'); });
-        panel.addEventListener('dragleave', (e) => { if(e.relatedTarget && panel.contains(e.relatedTarget)) return; panel.classList.remove('drop-active'); panel.classList.remove('drop-error'); });
-        panel.addEventListener('drop', (e) => {
-            e.preventDefault(); panel.classList.remove('drop-active');
-            const str = e.dataTransfer.getData('application/json'); const src = e.dataTransfer.getData('source-id');
-            if(!str || src === panel.id) return;
-            const pk = JSON.parse(str);
-            if(panel.id === 'panel-team-members') {
-                if(getPokemonDataFromDOM(leftPanel).length >= 6) { triggerErrorShake(panel); return; }
-            }
-            let dest = panel.querySelector('.poke-list-container');
-            createDraggableRow(pk, dest, null, true, panel.id);
-            const old = document.querySelector('.draggable-item.dragging'); if(old) old.remove();
-        });
-    });
+function triggerErrorShake(e) {
+    if(e.id==='panel-team-members'){
+        e.classList.add('drop-error','error-shake');
+        setTimeout(()=>{e.classList.remove('drop-error','error-shake')},600);
+    } else {
+        e.classList.add('btn-error');
+        setTimeout(()=>e.classList.remove('btn-error'),500);
+    }
 }
 
-function getPokemonDataFromDOM(p) { const l=[]; p.querySelectorAll('.poke-item-row').forEach(r=>{if(r.dataset.pokemon)l.push(JSON.parse(r.dataset.pokemon))}); return l; }
-function triggerErrorShake(e) { if(e.id==='panel-team-members'){e.classList.add('drop-error','error-shake');setTimeout(()=>{e.classList.remove('drop-error','error-shake')},600);}else{e.classList.add('btn-error');setTimeout(()=>e.classList.remove('btn-error'),500);} }
-function renderPokemonDetails(pk, c) { c.innerHTML=''; const d=document.createElement('div'); d.className='pk-detail-view'; d.innerHTML=`<div class="pk-detail-header"><div class="pk-detail-circle-big"></div><div class="pk-detail-name">${pk.name}</div></div><ul class="pk-stats-list"><li class="pk-stat-row"><span class="pk-label">Nivel</span><span class="pk-val">${pk.lvl}</span></li><li class="pk-stat-row"><span class="pk-label">Tipo</span><span class="pk-val">${pk.type}</span></li></ul>`; c.appendChild(d); setTimeout(()=>d.style.opacity='1',0); }
-function renderTeamNameHeader(c, t) { const w=document.createElement('div'); w.className='team-name-wrapper'; w.innerHTML=`<div class="name-row"><span class="team-name-text">${t.name}</span></div>`; c.appendChild(w); }
+function renderPokemonDetails(pk, c) {
+    c.innerHTML='';
+    const d=document.createElement('div');
+    d.className='pk-detail-view';
+    d.innerHTML=`<div class="pk-detail-header"><div class="pk-detail-circle-big"></div><div class="pk-detail-name">${pk.name}</div></div><ul class="pk-stats-list"><li class="pk-stat-row"><span class="pk-label">Nivel</span><span class="pk-val">${pk.lvl}</span></li><li class="pk-stat-row"><span class="pk-label">Tipo</span><span class="pk-val">${pk.type}</span></li></ul>`;
+    c.appendChild(d);
+    setTimeout(()=>d.style.opacity='1',0);
+}

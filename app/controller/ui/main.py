@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, session
-from app.controller.model.pokemon_model import Equipo
+from app.controller.model.team_model import Equipo
 from app.utils import login_required
 
 main_bp = Blueprint('main', __name__)

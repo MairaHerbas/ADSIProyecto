@@ -1,6 +1,5 @@
-# app/services.py
-from app.extensions import db
-from app.controller.model.models import Event, User
+# app/services/services.py
+from app.controller.model.user_model import Event, User
 
 
 class ChangelogService:
@@ -8,40 +7,31 @@ class ChangelogService:
     @staticmethod
     def registrar_evento(user_id, tipo, mensaje):
         """
-        Esta función la usarán tus compañeros (Funcionalidad 2) para
-        registrar acciones.
-        Ejemplo: ChangelogService.registrar_evento(current_user.id, 'EQUIPO', 'Ha creado el equipo Fuego')
+        Registra una acción en la base de datos usando SQL puro.
         """
-        nuevo_evento = Event(user_id=user_id, event_type=tipo, description=mensaje)
-        db.session.add(nuevo_evento)
-        db.session.commit()
+        Event.create(user_id, tipo, mensaje)
 
     @staticmethod
     def obtener_feed_amigos(current_user, filtro_usuario=None):
         """
-        Obtiene los eventos de los usuarios seguidos (amigos).
-        Permite filtrar por un nombre de usuario específico.
+        Obtiene los eventos de los amigos y del propio usuario.
+        Adaptado para SQL puro.
         """
-        # 1. Obtenemos los IDs de los amigos
-        # Según tu modelo actual, friends es una relación bidireccional
+        # 1. Obtener IDs de amigos y el propio
+        # (current_user.friends devuelve una lista de objetos User)
         amigos_ids = [amigo.id for amigo in current_user.friends]
-
-        # Incluimos nuestros propios eventos también (opcional, pero común en redes sociales)
         ids_a_buscar = amigos_ids + [current_user.id]
 
-        query = Event.query.filter(Event.user_id.in_(ids_a_buscar))
-
-        # 2. Aplicar filtro si existe 
+        # 2. Aplicar filtro de usuario si existe
         if filtro_usuario:
-            usuario_filtrado = User.query.filter_by(username=filtro_usuario.strip().lower()).first()
+            usuario_filtrado = User.get_by_username(filtro_usuario.strip())
+
             if usuario_filtrado and usuario_filtrado.id in ids_a_buscar:
-                query = query.filter(Event.user_id == usuario_filtrado.id)
-            elif usuario_filtrado:
-                # Si el usuario existe pero no es amigo, no mostramos nada por privacidad
-                return []
+                # Si existe y es amigo (o yo mismo), buscamos solo sus eventos
+                ids_a_buscar = [usuario_filtrado.id]
             else:
-                # Usuario no encontrado
+                # Usuario no encontrado o no es amigo
                 return []
 
-        # 3. Ordenar por fecha (más reciente primero)
-        return query.order_by(Event.created_at.desc()).all()
+        # 3. Obtener eventos usando la nueva función del modelo
+        return Event.get_recent_by_users(ids_a_buscar)
