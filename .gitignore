@@ -1,0 +1,17 @@
+# Archivos de Python compilados
+__pycache__/
+*.py[cod]
+
+# Entorno virtual (tu carpeta venv)
+venv/
+env/
+.venv/
+
+# Bases de datos (se crean localmente, no se suben)
+*.sqlite
+*.db
+instance/
+
+# Archivos de configuración del IDE
+.idea/
+.vscode/

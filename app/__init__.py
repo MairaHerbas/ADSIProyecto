@@ -2,12 +2,15 @@ from flask import Flask, render_template
 from config import Config
 from app.database.connection import db
 
-# Importar Blueprints
+# Importar Blueprints existentes
 from app.controller.ui.auth_controller import auth_bp
 from app.controller.ui.pokemon_controller import pokemon_bp
 from app.controller.ui.friends import friends_bp
 from app.controller.ui.main import main_bp
 from app.controller.ui.admin import admin_bp
+
+# IMPORTAR EL NUEVO BLUEPRINT (Asegúrate de que la ruta coincida con donde guardaste el archivo 5)
+from app.controller.ui.routes_changelog import changelog_bp
 
 # Importar Loader
 from app.services.pokemon_loader import PokemonLoader
@@ -23,13 +26,16 @@ def create_app():
     app.register_blueprint(friends_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(admin_bp)
+    
+    # Registrar el Blueprint de Changelog
+    app.register_blueprint(changelog_bp)
 
     @app.route('/')
     def index():
         return render_template('index.html')
 
     with app.app_context():
-        # 1. Crear Tablas del Sistema (Usuarios, Amigos, etc.)
+        # 1. Crear Tablas del Sistema (Usuarios, Amigos, y AHORA Changelog)
         init_tables()
 
         # 2. Cargar Pokemons si es necesario
@@ -85,18 +91,6 @@ def init_tables():
     );
     """)
 
-    # Tabla EVENT
-    db.insert("""
-    CREATE TABLE IF NOT EXISTS event (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        event_type TEXT NOT NULL,
-        description TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES user(id)
-    );
-    """)
-
     # Tabla FRIEND_REQUEST
     db.insert("""
     CREATE TABLE IF NOT EXISTS friend_request (
@@ -110,7 +104,7 @@ def init_tables():
     );
     """)
 
-    # Tabla FRIENDSHIP (La que te daba error)
+    # Tabla FRIENDSHIP
     db.insert("""
     CREATE TABLE IF NOT EXISTS friendship (
         user_id INTEGER,
@@ -121,7 +115,18 @@ def init_tables():
     );
     """)
 
-    # --- EL PRINT QUE PEDISTE ---
+    # --- NUEVA TABLA: CHANGELOG_EVENT ---
+    db.insert("""
+    CREATE TABLE IF NOT EXISTS Changelog_Event (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        idUsuario INTEGER NOT NULL,
+        tipo TEXT NOT NULL,
+        descripcion TEXT NOT NULL,
+        fecha DATETIME DEFAULT (datetime('now','localtime')),
+        FOREIGN KEY(idUsuario) REFERENCES user(id)
+    );
+    """)
+
     print("\n" + "=" * 50)
     print("✅  API CARGADA CORRECTAMENTE: Tablas inicializadas.")
     print("=" * 50 + "\n")
