@@ -4,7 +4,7 @@ from app.utils import login_required
 from app.controller.model.team_model import Equipo, PokemonEquipo
 from app.controller.model.pokemon_model import Pokemon
 # Importamos para filtrar capturados
-from app.controller.model.pokemon_db_controller import PokemonDBController
+from app.controller.model.pokemon_db_model import PokemonDBController
 
 team_bp = Blueprint('team', __name__)
 

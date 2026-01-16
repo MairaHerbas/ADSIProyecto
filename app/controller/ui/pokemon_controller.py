@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, session, request
-from app.controller.model.pokemon_db_controller import PokemonDBController
+from app.controller.model.pokemon_db_model import PokemonDBController
 
 pokemon_bp = Blueprint('pokemon_bp', __name__)
 

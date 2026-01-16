@@ -4,7 +4,7 @@ from app import create_app
 from app.database.connection import db
 
 # Importamos tu controlador
-from app.controller.model.pokemon_db_controller import PokemonDBController
+from app.controller.model.pokemon_db_model import PokemonDBController
 
 class TestGestionEquipos(unittest.TestCase):
 

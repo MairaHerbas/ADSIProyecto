@@ -1,5 +1,5 @@
 import requests
-from app.controller.model.pokemon_db_controller import PokemonDBController
+from app.controller.model.pokemon_db_model import PokemonDBController
 
 
 class PokemonLoader:

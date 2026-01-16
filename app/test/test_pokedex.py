@@ -28,7 +28,7 @@ class TestPlanPokedex(unittest.TestCase):
         cls.client = app.test_client()
 
         # Aseguramos que la DB tenga las tablas creadas
-        from app.controller.model.pokemon_db_controller import PokemonDBController
+        from app.controller.model.pokemon_db_model import PokemonDBController
         db_ctrl = PokemonDBController()
         db_ctrl.crear_tabla()
 

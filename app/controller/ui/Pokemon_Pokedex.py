@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, render_template
 from app.services.pokemon_loader import PokemonLoader
-from app.controller.model.pokemon_db_controller import PokemonDBController
+from app.controller.model.pokemon_db_model import PokemonDBController
 
 # Definimos el Blueprint para las rutas
 pokedex_bp = Blueprint('pokedex_ui', __name__)
