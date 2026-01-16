@@ -1,14 +1,11 @@
 (function() {
-    const btnOpen = document.getElementById('btn-open-pokedex');
+    const btnOpen = document.getElementById('btn-test-pokedex') || document.getElementById('btn-open-pokedex');
     let pokemonsCache = [];
 
-    // Listas fijas para rellenar los selects
     const TIPOS = ["normal","fire","water","electric","grass","ice","fighting","poison","ground","flying","psychic","bug","rock","ghost","dragon","steel","dark","fairy"];
     const GENS = ["Gen 1","Gen 2","Gen 3","Gen 4","Gen 5","Gen 6","Gen 7","Gen 8","Gen 9"];
 
-    if(btnOpen) {
-        btnOpen.addEventListener('click', abrirVentanaFlotante);
-    }
+    if(btnOpen) btnOpen.addEventListener('click', abrirVentanaFlotante);
 
     function abrirVentanaFlotante() {
         if(document.getElementById('fake-modal-pokedex')) return;
@@ -19,13 +16,11 @@
 
         const box = document.createElement('div');
         box.className = 'modal-body';
-        box.style.cssText = "width:95%; max-width:1100px; height:85%; background:#2b2b2b; border-radius:10px; overflow:hidden; position:relative; box-shadow:0 0 50px rgba(0,0,0,1); border: 1px solid #444; display:flex; flex-direction:column;";
+        box.style.cssText = "width:95%; max-width:1100px; height:85%; background:#2b2b2b; border-radius:10px; overflow:hidden; position:relative; border: 1px solid #444; display:flex; flex-direction:column;";
 
         const closeBtn = document.createElement('div');
         closeBtn.innerText = "×";
-        closeBtn.style.cssText = "position:absolute; top:10px; right:20px; color:#aaa; font-size:40px; font-weight:bold; cursor:pointer; z-index:100000; line-height:0.8; height:40px; width:40px; text-align:center;";
-        closeBtn.onmouseover = () => closeBtn.style.color = "white";
-        closeBtn.onmouseout = () => closeBtn.style.color = "#aaa";
+        closeBtn.style.cssText = "position:absolute; top:10px; right:20px; color:#aaa; font-size:40px; font-weight:bold; cursor:pointer; z-index:100000; line-height:0.8;";
         closeBtn.onclick = (e) => { e.stopPropagation(); document.body.removeChild(overlay); };
 
         overlay.appendChild(box);
@@ -36,204 +31,162 @@
     }
 
     function iniciarInterfaz(container) {
-        const opsTipos = TIPOS.map(t => `<option value="${t}">${t.toUpperCase()}</option>`).join('');
-        const opsGens = GENS.map(g => `<option value="${g}">${g}</option>`).join('');
+        const opsT = TIPOS.map(t=>`<option value="${t}">${t.toUpperCase()}</option>`).join('');
+        const opsG = GENS.map(g=>`<option value="${g}">${g}</option>`).join('');
 
         container.innerHTML = `
             <div class="dex-container">
                 <div class="dex-sidebar">
-                    <div class="dex-title">POKÉDEX NACIONAL</div>
-                    <input type="text" id="dex-filter-name" class="dex-input" placeholder="Buscar Nombre..." autocomplete="off">
+                    <div class="dex-title">POKÉDEX</div>
+                    <input type="text" id="dex-search" class="dex-input" placeholder="Nombre..." autocomplete="off">
                     <div class="filter-group">
-                        <select id="dex-filter-gen" class="dex-select"><option value="">TODAS GEN</option>${opsGens}</select>
-                        <select id="dex-filter-type" class="dex-select"><option value="">TODOS TIPOS</option>${opsTipos}</select>
+                        <select id="dex-gen" class="dex-select"><option value="">GEN</option>${opsG}</select>
+                        <select id="dex-type" class="dex-select"><option value="">TIPO</option>${opsT}</select>
                     </div>
-                    <div id="dex-list" class="dex-list"><div style="padding:20px; text-align:center; color:#666;">Cargando...</div></div>
+                    <div id="dex-list" class="dex-list"><div style="text-align:center; padding:20px; color:#666;">Cargando...</div></div>
                 </div>
                 <div class="dex-main" id="dex-detail">
-                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#555;">
-                        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" style="width:100px; opacity:0.1; filter:grayscale(1);">
-                        <p style="margin-top:20px; font-size:1.2rem;">SELECCIONA UN POKÉMON</p>
-                    </div>
+                    <div style="display:flex; justify-content:center; align-items:center; height:100%; color:#555;">SELECCIONA UN POKÉMON</div>
                 </div>
             </div>
         `;
-
-        const inputs = ['dex-filter-name', 'dex-filter-gen', 'dex-filter-type'];
-        inputs.forEach(id => document.getElementById(id).addEventListener('input', aplicarFiltros));
+        ['dex-search','dex-gen','dex-type'].forEach(id => document.getElementById(id).addEventListener('input', filtrar));
         cargarDatos();
     }
 
     async function cargarDatos() {
         try {
             const res = await fetch('/api/pokedex');
-            if(!res.ok) throw new Error("Error API");
             const data = await res.json();
             pokemonsCache = data;
-            renderizarLista(data);
-        } catch (e) {
-            console.error(e);
-            document.getElementById('dex-list').innerHTML = "<div style='color:red; text-align:center'>Error de conexión</div>";
-        }
+            renderLista(data);
+        } catch(e) { console.error(e); }
     }
 
-    function renderizarLista(lista) {
-        const listContainer = document.getElementById('dex-list');
-        listContainer.innerHTML = '';
-
-        if(lista.length === 0) {
-            listContainer.innerHTML = "<div style='text-align:center; padding:20px; color:#666'>Sin resultados</div>";
-            return;
-        }
-
-        const visibleList = lista.slice(0, 50);
-
-        visibleList.forEach(poke => {
+    function renderLista(lista) {
+        const div = document.getElementById('dex-list');
+        div.innerHTML = '';
+        lista.slice(0, 50).forEach(p => {
             const item = document.createElement('div');
             item.className = 'dex-item';
+            item.id = `list-item-${p.id}`;
             item.innerHTML = `
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <img src="${poke.sprite}" style="width:30px; height:30px;">
-                    <div>
-                        <div style="font-weight:bold; color:${poke.owned ? '#81c784' : '#ccc'}">${poke.name}</div>
-                        <div style="font-size:0.7rem; color:#666;">#${poke.id} • ${poke.generation}</div>
-                    </div>
-                </div>
-                <div class="fake-toggle ${poke.owned ? 'owned' : ''}"></div>
+                <div><strong style="color:${p.owned?'#81c784':'#ccc'}">${p.name}</strong> <small style="color:#666">${p.generation}</small></div>
+                <div class="fake-toggle ${p.owned?'owned':''}"></div>
             `;
             item.onclick = () => {
-                document.querySelectorAll('.dex-item').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.dex-item').forEach(e=>e.classList.remove('active'));
                 item.classList.add('active');
-                mostrarDetalleCompleto(poke);
+                mostrarDetalle(p);
             };
-            listContainer.appendChild(item);
+            div.appendChild(item);
         });
     }
 
-    function aplicarFiltros() {
-        const txtName = document.getElementById('dex-filter-name').value.toLowerCase();
-        const txtGen = document.getElementById('dex-filter-gen').value;
-        const txtType = document.getElementById('dex-filter-type').value;
-
-        const filtrados = pokemonsCache.filter(p => {
-            const matchName = p.name.toLowerCase().includes(txtName);
-            const matchGen = txtGen === "" || p.generation === txtGen;
-            const matchType = txtType === "" || p.types.includes(txtType);
-            return matchName && matchGen && matchType;
-        });
-        renderizarLista(filtrados);
+    function filtrar() {
+        const txt = document.getElementById('dex-search').value.toLowerCase();
+        const gen = document.getElementById('dex-gen').value;
+        const typ = document.getElementById('dex-type').value;
+        const res = pokemonsCache.filter(p =>
+            p.name.toLowerCase().includes(txt) &&
+            (gen==="" || p.generation===gen) &&
+            (typ==="" || p.types.includes(typ))
+        );
+        renderLista(res);
     }
 
-    // --- FUNCIÓN DE DETALLE MEJORADA ---
-    function mostrarDetalleCompleto(poke) {
-        const container = document.getElementById('dex-detail');
+    function mostrarDetalle(p) {
+        const box = document.getElementById('dex-detail');
+        const colors = {fire:'#F08030',water:'#6890F0',grass:'#78C850',electric:'#F8D030',default:'#aaa'};
+        const color = colors[p.types[0]] || '#aaa';
 
-        const typeColors = {
-            fire: '#F08030', water: '#6890F0', grass: '#78C850', electric: '#F8D030',
-            ice: '#98D8D8', fighting: '#C03028', poison: '#A040A0', ground: '#E0C068',
-            flying: '#A890F0', psychic: '#F85888', bug: '#A8B820', rock: '#B8A038',
-            ghost: '#705898', dragon: '#7038F8', steel: '#B8B8D0', fairy: '#EE99AC',
-            normal: '#A8A878', dark: '#705848'
-        };
-        const mainColor = typeColors[poke.types[0]] || '#aaa';
-
-        const abilitiesHtml = poke.habilidades ? poke.habilidades.split(',').map(h =>
+        // --- RECUPERADO: Procesar Habilidades ---
+        const abilitiesHtml = p.habilidades ? p.habilidades.split(',').map(h =>
             `<span class="tag">${h}</span>`
         ).join('') : '<span style="color:#666">Desconocidas</span>';
 
-        // Preparamos la lista de movimientos (Array)
-        const movesArray = poke.movimientos ? poke.movimientos.split(',') : [];
-
-        container.innerHTML = `
+        box.innerHTML = `
             <div class="detail-header">
-                <h1 style="color:${mainColor}; text-transform:uppercase; letter-spacing:4px; margin:0; font-size:2.5rem; text-shadow:0 2px 10px rgba(0,0,0,0.5);">${poke.name}</h1>
-                <div style="margin-top:10px;">
-                    ${poke.types.map(t => `<span class="tag" style="background:${typeColors[t]}; color:white; border:none; padding:5px 15px; font-weight:bold; text-transform:uppercase;">${t}</span>`).join('')}
-                </div>
-                <img src="${poke.sprite}" class="detail-img-lg">
+                <h1 style="color:${color}; text-transform:uppercase; margin:0;">${p.name}</h1>
+                <div>${p.types.map(t=>`<span class="tag" style="background:${color}; color:white;">${t}</span>`).join('')}</div>
+                <img src="${p.sprite}" class="detail-img-lg">
             </div>
 
             <div class="info-grid">
                 <div class="info-card">
-                    <div class="info-title">Estadísticas Base</div>
-                    ${crearBarra('HP', poke.stats.hp, '#FF5959')}
-                    ${crearBarra('ATK', poke.stats.atk, '#F5AC78')}
-                    ${crearBarra('DEF', poke.stats.def, '#FAE078')}
-                    ${crearBarra('SPA', poke.stats.sp_atk, '#9DB7F5')}
-                    ${crearBarra('SPD', poke.stats.sp_def, '#A7DB8D')}
-                    ${crearBarra('SPE', poke.stats.spd, '#FA92B2')}
-                    <div style="margin-top:10px; font-size:0.7rem; color:#666; text-align:center;">TOTAL: ${Object.values(poke.stats).reduce((a,b)=>a+b, 0)}</div>
+                    <strong style="display:block; border-bottom:1px solid #444; margin-bottom:10px; padding-bottom:5px; color:#888;">ESTADÍSTICAS</strong>
+                    ${Object.entries(p.stats).map(([k,v])=>`
+                        <div class="stat-row">
+                            <span style="width:40px; color:#aaa;">${k.toUpperCase().slice(0,3)}</span>
+                            <div class="stat-track"><div class="stat-fill" style="width:${Math.min(v/2,100)}%; background:${color}"></div></div>
+                            <span>${v}</span>
+                        </div>
+                    `).join('')}
                 </div>
 
                 <div class="info-card">
-                    <div class="info-title">Datos Técnicos</div>
+                    <strong style="display:block; border-bottom:1px solid #444; margin-bottom:10px; padding-bottom:5px; color:#888;">DATOS TÉCNICOS</strong>
                     <div style="margin-bottom:15px;">
                         <span style="color:#aaa; display:block; font-size:0.75rem;">Generación</span>
-                        <span style="font-size:1.1rem;">${poke.generation}</span>
+                        <span style="font-size:1.1rem;">${p.generation}</span>
                     </div>
-                    <div class="info-title" style="margin-top:10px;">Habilidades</div>
-                    <div style="line-height:1.5;">${abilitiesHtml}</div>
+                    <strong style="display:block; border-bottom:1px solid #444; margin-bottom:10px; padding-bottom:5px; color:#888; margin-top:15px;">HABILIDADES</strong>
+                    <div style="line-height:1.6;">${abilitiesHtml}</div>
                 </div>
 
-                <div class="info-card" style="grid-column: span 2;">
-                    <div class="info-title">Movimientos (${movesArray.length})</div>
-                    <div id="moves-container" style="display:flex; flex-wrap:wrap; gap:5px;">
-                        </div>
+                <div class="info-card" style="grid-column:span 2;">
+                    <strong style="display:block; border-bottom:1px solid #444; margin-bottom:10px; padding-bottom:5px; color:#888;">MOVIMIENTOS</strong>
+                    <div id="moves-box" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+                </div>
+
+                <div class="capture-container">
+                    <span class="capture-label" id="cap-lbl" style="color:${p.owned?'#4caf50':'#aaa'}">${p.owned?'CAPTURADO':'NO CAPTURADO'}</span>
+                    <label class="switch">
+                        <input type="checkbox" id="btn-cap" ${p.owned?'checked':''}>
+                        <span class="slider"></span>
+                    </label>
                 </div>
             </div>
         `;
 
-        // --- LÓGICA DEL BOTÓN "VER MÁS" ---
-        // Definimos una función interna para pintar los movimientos
-        const renderMoves = (showAll) => {
-            const movesBox = document.getElementById('moves-container');
-            if(!movesBox) return;
-
-            if(movesArray.length === 0) {
-                movesBox.innerHTML = '<span style="color:#666">Sin datos</span>';
-                return;
-            }
-
-            const LIMIT = 18; // Mostramos 18 al principio
-            const listToShow = showAll ? movesArray : movesArray.slice(0, LIMIT);
-
-            let html = listToShow.map(m =>
-                `<span class="tag" style="border-color:#444; background:#222;">${m}</span>`
-            ).join('');
-
-            // Si hay más de 18, mostramos el botón
-            if(!showAll && movesArray.length > LIMIT) {
-                const restante = movesArray.length - LIMIT;
-                // Botón "+ X MÁS"
-                html += `<span id="btn-show-moves" class="tag" style="background:#444; color:white; cursor:pointer; border:1px solid #777; font-weight:bold;">+${restante} MÁS...</span>`;
-            } else if (showAll && movesArray.length > LIMIT) {
-                // Botón "VER MENOS"
-                html += `<span id="btn-hide-moves" class="tag" style="background:#444; color:#aaa; cursor:pointer; border:1px solid #777;">VER MENOS</span>`;
-            }
-
-            movesBox.innerHTML = html;
-
-            // Asignar eventos a los botones recién creados
-            const btnShow = document.getElementById('btn-show-moves');
-            if(btnShow) btnShow.onclick = () => renderMoves(true);
-
-            const btnHide = document.getElementById('btn-hide-moves');
-            if(btnHide) btnHide.onclick = () => renderMoves(false);
+        // LÓGICA DE MOVIMIENTOS
+        const moves = p.movimientos ? p.movimientos.split(',') : [];
+        const renderM = (all) => {
+            const list = all ? moves : moves.slice(0, 15);
+            let html = list.map(m=>`<span class="tag">${m}</span>`).join('');
+            if(!all && moves.length > 15) html += `<span id="more-moves" class="tag" style="cursor:pointer; background:#666; color:white;">+${moves.length-15} MÁS</span>`;
+            else if(all) html += `<span id="less-moves" class="tag" style="cursor:pointer; background:#444; color:#aaa;">VER MENOS</span>`;
+            document.getElementById('moves-box').innerHTML = html;
+            if(document.getElementById('more-moves')) document.getElementById('more-moves').onclick = () => renderM(true);
+            if(document.getElementById('less-moves')) document.getElementById('less-moves').onclick = () => renderM(false);
         };
+        renderM(false);
 
-        // Pintamos la lista inicial (contraída)
-        renderMoves(false);
+        // LÓGICA DE CAPTURA
+        document.getElementById('btn-cap').addEventListener('change', async function() {
+            const lbl = document.getElementById('cap-lbl');
+            lbl.innerText = "GUARDANDO...";
+            try {
+                const res = await fetch('/api/pokedex/capture', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({pokemon_id: p.id})
+                });
+                const ret = await res.json();
+                if(ret.success) {
+                    p.owned = ret.captured;
+                    lbl.innerText = ret.captured ? "CAPTURADO" : "NO CAPTURADO";
+                    lbl.style.color = ret.captured ? "#4caf50" : "#aaa";
+
+                    const listItem = document.getElementById(`list-item-${p.id}`);
+                    if(listItem) {
+                        const toggle = listItem.querySelector('.fake-toggle');
+                        const name = listItem.querySelector('strong');
+                        if(ret.captured) { toggle.classList.add('owned'); name.style.color = '#81c784'; }
+                        else { toggle.classList.remove('owned'); name.style.color = '#ccc'; }
+                    }
+                }
+            } catch(e) { console.error(e); this.checked = !this.checked; }
+        });
     }
-
-    function crearBarra(lbl, val, col) {
-        const pct = Math.min((val/200)*100, 100);
-        return `
-            <div class="stat-row">
-                <span class="stat-lbl">${lbl}</span>
-                <div class="stat-track"><div class="stat-fill" style="width:${pct}%; background:${col}; box-shadow:0 0 5px ${col};"></div></div>
-                <span class="stat-num">${val}</span>
-            </div>
-        `;
-    }
-
 })();

@@ -1,111 +1,88 @@
 from app.database.connection import db
 
-
 class PokemonDBController:
     def __init__(self):
         self.db = db
 
     def crear_tabla(self):
-        """
-        Crea la estructura solo si NO existe. No borra datos.
-        """
-        sql = """
+        # 1. Tabla de Pokémon
+        sql_poke = """
             CREATE TABLE IF NOT EXISTS pokemons (
                 id INTEGER PRIMARY KEY,
-                nombre TEXT,
-                imagen TEXT,
-                tipos TEXT,
-                habilidades TEXT,
-                movimientos TEXT,
-                generacion TEXT,
-                hp INTEGER,
-                ataque INTEGER,
-                ataque_especial INTEGER,
-                defensa INTEGER,
-                defensa_especial INTEGER,
-                velocidad INTEGER
+                nombre TEXT, imagen TEXT, tipos TEXT,
+                habilidades TEXT, movimientos TEXT, generacion TEXT,
+                hp INTEGER, ataque INTEGER, ataque_especial INTEGER,
+                defensa INTEGER, defensa_especial INTEGER, velocidad INTEGER
+            );
+        """
+        # 2. Tabla de Capturas (Relación Usuario <-> Pokémon)
+        sql_cap = """
+            CREATE TABLE IF NOT EXISTS capturas (
+                user_id INTEGER,
+                pokemon_id INTEGER,
+                fecha_captura TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (user_id, pokemon_id)
             );
         """
         try:
-            self.db.update(sql)
+            self.db.update(sql_poke)
+            self.db.update(sql_cap)
             return True
         except Exception as e:
-            print(f"[DB Error] Creando tabla: {e}")
+            print(f"[DB] Error creando tablas: {e}")
             return False
 
     def reiniciar_tabla(self):
         try:
-            print("--- Reiniciando tabla Pokemons (DROP & CREATE) ---")
             self.db.update("DROP TABLE IF EXISTS pokemons")
+            self.db.update("DROP TABLE IF EXISTS capturas")
             return self.crear_tabla()
         except Exception as e:
             print(f"[DB Error] Reiniciando tabla: {e}")
             return False
 
-    def contar_registros(self):
-        sql = "SELECT COUNT(*) FROM pokemons"
+    def guardar_pokemon(self, d):
+        sql = "INSERT OR REPLACE INTO pokemons (id, nombre, imagen, tipos, habilidades, movimientos, generacion, hp, ataque, ataque_especial, defensa, defensa_especial, velocidad) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         try:
-            rows = self.db.select(sql)
-            return rows[0][0]
-        except Exception:
-            return 0
-
-    def guardar_pokemon(self, datos):
-        sql = """
-            INSERT OR REPLACE INTO pokemons (
-                id, nombre, imagen, tipos, habilidades, movimientos, generacion,
-                hp, ataque, ataque_especial, defensa, defensa_especial, velocidad
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """
-        params = (
-            datos['id'],
-            datos['nombre'],
-            datos['imagen'],
-            datos['tipos'],
-            datos['habilidades'],
-            datos['movimientos'],
-            datos['generacion'],
-            datos['hp'],
-            datos['ataque'],
-            datos['ataque_especial'],
-            datos['defensa'],
-            datos['defensa_especial'],
-            datos['velocidad']
-        )
-        try:
-            self.db.insert(sql, params)
+            self.db.insert(sql, (d['id'], d['nombre'], d['imagen'], d['tipos'], d['habilidades'], d['movimientos'], d['generacion'], d['hp'], d['ataque'], d['ataque_especial'], d['defensa'], d['defensa_especial'], d['velocidad']))
             return True
-        except Exception as e:
-            print(f"[DB Error] Al guardar {datos['nombre']}: {e}")
-            return False
+        except: return False
 
-    # --- AQUÍ ESTABA EL FALLO, AHORA MAPEAMOS TODO ---
     def obtener_todos(self):
         sql = "SELECT * FROM pokemons"
         try:
             rows = self.db.select(sql)
-            pokemons = []
-            for row in rows:
-                # Mapeamos TODAS las columnas por su índice (orden de creación)
-                pokemons.append({
-                    "id": row[0],
-                    "nombre": row[1],
-                    "imagen": row[2],
-                    "tipos": row[3],
-                    "habilidades": row[4],
-                    "movimientos": row[5],
-                    "generacion": row[6],
-                    "hp": row[7],
-                    "ataque": row[8],
-                    "ataque_especial": row[9],
-                    "defensa": row[10],
-                    "defensa_especial": row[11],
-                    "velocidad": row[12]
-                })
-            return pokemons
-        except Exception as e:
-            print(f"Error recuperando pokemons: {e}")
-            return []
+            return [{
+                "id": r[0], "nombre": r[1], "imagen": r[2], "tipos": r[3],
+                "habilidades": r[4], "movimientos": r[5], "generacion": r[6],
+                "hp": r[7], "ataque": r[8], "ataque_especial": r[9],
+                "defensa": r[10], "defensa_especial": r[11], "velocidad": r[12]
+            } for r in rows]
+        except: return []
 
-    def esta_vacia(self):
-        return self.contar_registros() == 0
+    def contar_registros(self):
+        try: return self.db.select("SELECT COUNT(*) FROM pokemons")[0][0]
+        except: return 0
+
+    # --- MÉTODOS DE CAPTURA ---
+
+    def obtener_capturados(self, user_id):
+        """Devuelve un conjunto (Set) con los IDs capturados por el usuario"""
+        try:
+            rows = self.db.select("SELECT pokemon_id FROM capturas WHERE user_id = ?", (user_id,))
+            return {row[0] for row in rows}
+        except: return set()
+
+    def toggle_captura(self, user_id, pokemon_id):
+        """Si lo tiene -> borra. Si no -> inserta."""
+        try:
+            exists = self.db.select("SELECT 1 FROM capturas WHERE user_id = ? AND pokemon_id = ?", (user_id, pokemon_id))
+            if exists:
+                self.db.delete("DELETE FROM capturas WHERE user_id = ? AND pokemon_id = ?", (user_id, pokemon_id))
+                return False # Liberado
+            else:
+                self.db.insert("INSERT INTO capturas (user_id, pokemon_id) VALUES (?, ?)", (user_id, pokemon_id))
+                return True # Capturado
+        except Exception as e:
+            print(f"[DB] Error toggle: {e}")
+            return False
