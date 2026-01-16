@@ -1,4 +1,5 @@
 from app.database.connection import db
+from app.services.gestor_eventos import GestorEventos
 
 class PokemonDBController:
     def __init__(self):
@@ -74,15 +75,44 @@ class PokemonDBController:
         except: return set()
 
     def toggle_captura(self, user_id, pokemon_id):
-        """Si lo tiene -> borra. Si no -> inserta."""
         try:
-            exists = self.db.select("SELECT 1 FROM capturas WHERE user_id = ? AND pokemon_id = ?", (user_id, pokemon_id))
+            # Comprobar si ya existe
+            exists = self.db.select("SELECT 1 FROM capturas WHERE user_id = ? AND pokemon_id = ?",
+                                    (user_id, pokemon_id))
+
             if exists:
+                # Si existe, lo borramos (LIBERAR)
                 self.db.delete("DELETE FROM capturas WHERE user_id = ? AND pokemon_id = ?", (user_id, pokemon_id))
-                return False # Liberado
+                # 3. CREAR NOTIFICACIÓN
+                # Primero obtenemos el nombre para que el mensaje quede bien
+                res_nombre = self.db.select("SELECT nombre FROM pokemons WHERE id = ?", (pokemon_id,))
+                nombre_poke = res_nombre[0][0] if res_nombre else "Pokémon"
+
+                # Llamamos al gestor usando el método estático
+                GestorEventos.registrarEvento(
+                    idUsuario=user_id,
+                    tipoEvento="Captura",
+                    descripcion=f"Ha Liberado a {nombre_poke}"
+                )
+                return False
             else:
+                # Si no existe, lo insertamos (CAPTURAR)
                 self.db.insert("INSERT INTO capturas (user_id, pokemon_id) VALUES (?, ?)", (user_id, pokemon_id))
-                return True # Capturado
+
+                # 3. CREAR NOTIFICACIÓN
+                # Primero obtenemos el nombre para que el mensaje quede bien
+                res_nombre = self.db.select("SELECT nombre FROM pokemons WHERE id = ?", (pokemon_id,))
+                nombre_poke = res_nombre[0][0] if res_nombre else "Pokémon"
+
+                # Llamamos al gestor usando el método estático
+                GestorEventos.registrarEvento(
+                    idUsuario=user_id,
+                    tipoEvento="Captura",
+                    descripcion=f"Ha capturado a {nombre_poke}"
+                )
+
+                return True
+
         except Exception as e:
             print(f"[DB] Error toggle: {e}")
             return False
